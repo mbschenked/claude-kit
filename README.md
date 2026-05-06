@@ -20,16 +20,20 @@ cd claude-kit
 **Mac / Linux:**
 
 ```bash
-bash scripts/install-mac.sh
+bash scripts/install-mac.sh           # add new agents, leave others alone
+bash scripts/install-mac.sh --prune   # also remove stale agents not in this repo
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-.\scripts\install-win.ps1
+.\scripts\install-win.ps1            # add new agents, leave others alone
+.\scripts\install-win.ps1 -Prune     # also remove stale agents not in this repo
 ```
 
 The install scripts copy `agents/*.md` into the right Claude Code config directory for the OS (`~/.claude/agents/` or `%USERPROFILE%\.claude\agents\`). Re-run after a `git pull` to update.
+
+`--prune` / `-Prune` makes the destination mirror the repo exactly — useful after deleting an agent here. **Without** the flag, files in the destination that aren't in this repo are left alone (safe if you have agents from other sources).
 
 ## Updating
 
