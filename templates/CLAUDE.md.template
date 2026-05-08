@@ -1,0 +1,48 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+<!--
+  Template — replace bracketed prompts with project-specific content. Keep this under 150 lines.
+  Verify every command in Setup / Test / Run before committing (see ~/.claude/CLAUDE.md verified-commands rule).
+  Delete sections that don't apply rather than leaving stub content.
+-->
+
+## What this is
+
+[1–3 sentences: what this project is, what it isn't, what *kind* of code it is (sandbox, library, app, prototype). Mention any constraints that change how Claude should approach it — e.g., "intentionally minimal", "production hot path", "experimental, assume nothing is sacred".]
+
+## Setup
+
+```
+[exact commands to install dependencies — verified by running, not guessed]
+```
+
+[Non-obvious prereqs: language version pins, system packages, env vars, running services, required fixtures. If a step has a known failure mode (wrong version manager, stale lockfile, missing system lib), document the fallback so Claude doesn't loop on it.]
+
+## Test
+
+```
+[command to run the full test suite]
+[command to run a single test, if non-obvious]
+```
+
+[Call out anything tests *don't* cover but should — Claude can't infer this from the code alone, and it's where regressions sneak in.]
+
+## Run
+
+```
+[how to run the thing, with an example invocation]
+```
+
+[Usage gotchas worth documenting: shell-escaping pitfalls, expected exit codes, output-formatting quirks, env vars that change behavior.]
+
+## Architecture
+
+[2–4 sentences on the shape of the code: entry points, key modules, how they fit together. Then *explicitly call out test coverage gaps* (e.g., "test_X imports the pure fns directly, so changes to main() / argv parsing are not exercised"). This is the highest-leverage section — the part Claude can't reconstruct from grep alone.]
+
+## Conventions
+
+- [Defaults Claude should follow: naming, formatting, file organization, idioms specific to this codebase.]
+- [What NOT to touch: generated files, vendored code, binary blobs, lockfiles, anything with a manual editing workflow.]
+- [House style notes that aren't enforced by linters.]
