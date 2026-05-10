@@ -57,9 +57,48 @@ install_dir() {
   fi
 }
 
+install_skills() {
+  local subdir="skills"
+  local dest="$HOME/.claude/$subdir"
+  local src_dir="$REPO_DIR/$subdir"
+
+  [ -d "$src_dir" ] || return 0
+  mkdir -p "$dest"
+
+  local count=0
+  for src in "$src_dir"/*/; do
+    [ -d "$src" ] || continue
+    name="$(basename "$src")"
+    rm -rf "$dest/$name"
+    cp -R "$src" "$dest/$name"
+    echo "  installed skills/$name"
+    count=$((count + 1))
+  done
+
+  local pruned=0
+  if [ "$PRUNE" = "1" ]; then
+    for dst in "$dest"/*/; do
+      [ -d "$dst" ] || continue
+      name="$(basename "$dst")"
+      if [ ! -d "$src_dir/$name" ]; then
+        rm -rf "$dst"
+        echo "  pruned skills/$name"
+        pruned=$((pruned + 1))
+      fi
+    done
+  fi
+
+  echo "Installed $count skill(s) to $dest"
+  if [ "$PRUNE" = "1" ]; then
+    echo "Pruned $pruned stale skill(s)"
+  fi
+}
+
 install_dir agents
 echo
 install_dir commands
+echo
+install_skills
 
 echo
 echo "Restart Claude Code if it was already running."

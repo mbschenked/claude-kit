@@ -7,6 +7,7 @@ Max's personal Claude Code kit — subagents, references, install scripts. Synce
 ```
 agents/        Claude Code subagents (drop-in for ~/.claude/agents/)
 commands/      Claude Code slash commands (drop-in for ~/.claude/commands/)
+skills/        Claude Code skills (drop-in for ~/.claude/skills/, one dir per skill with SKILL.md)
 references/    Reference docs that inform agent design
 scripts/       Per-OS install scripts
 ```
@@ -32,7 +33,7 @@ bash scripts/install-mac.sh --prune   # also remove stale agents not in this rep
 .\scripts\install-win.ps1 -Prune     # also remove stale agents not in this repo
 ```
 
-The install scripts copy `agents/*.md` and `commands/*.md` into the right Claude Code config directories for the OS (`~/.claude/{agents,commands}/` or `%USERPROFILE%\.claude\{agents,commands}\`). Re-run after a `git pull` to update.
+The install scripts copy `agents/*.md`, `commands/*.md`, and each `skills/<name>/` directory into the right Claude Code config directories for the OS (`~/.claude/{agents,commands,skills}/` or `%USERPROFILE%\.claude\{agents,commands,skills}\`). Re-run after a `git pull` to update.
 
 `--prune` / `-Prune` makes the destination mirror the repo exactly — useful after deleting an agent here. **Without** the flag, files in the destination that aren't in this repo are left alone (safe if you have agents from other sources).
 
@@ -51,6 +52,13 @@ Add or edit agents in `agents/`, commit, push. Pull on the other machine and re-
 | Command | Purpose |
 |---|---|
 | `/save` | End the session with a structured grade of how well I applied Anthropic's Claude Code best practices. Five rubric categories scored 1–5 with concrete next-session improvements. |
+
+## Skills
+
+| Skill | Purpose |
+|---|---|
+| `research-brief` | Synthesize a research conversation or web-search session into a structured brief: question, key findings (with confidence tags), sources (with tier flags), what wasn't checked, open questions, next actions. Required "What I didn't check" section is the distinguishing feature. |
+| `draft-critique` | Structured pushback on a written draft: audience read, claim-by-claim doubt/reconcile loop, severity-tagged cuts (Critical/Optional/Nit), strengths to preserve, explicit gaps, one-or-two-revision next pass. Borrows the `CLAIM → DOUBT → RECONCILE` pattern from `doubt-driven-development` and severity tags from code-review collections. |
 
 ## References
 

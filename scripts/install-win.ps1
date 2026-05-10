@@ -53,9 +53,55 @@ function Install-Subdir {
     }
 }
 
+function Install-Skills {
+    $Subdir = "skills"
+    $SrcDir = Join-Path $RepoDir $Subdir
+    $Dest = Join-Path $env:USERPROFILE ".claude\$Subdir"
+
+    if (-not (Test-Path $SrcDir)) {
+        return
+    }
+
+    if (-not (Test-Path $Dest)) {
+        New-Item -ItemType Directory -Path $Dest -Force | Out-Null
+    }
+
+    $RepoSkills = Get-ChildItem -Path $SrcDir -Directory
+    $RepoNames = @($RepoSkills | ForEach-Object { $_.Name })
+
+    $count = 0
+    $RepoSkills | ForEach-Object {
+        $DestPath = Join-Path $Dest $_.Name
+        if (Test-Path $DestPath) {
+            Remove-Item -Path $DestPath -Recurse -Force
+        }
+        Copy-Item -Path $_.FullName -Destination $DestPath -Recurse -Force
+        Write-Host "  installed skills/$($_.Name)"
+        $count++
+    }
+
+    $pruned = 0
+    if ($Prune) {
+        Get-ChildItem -Path $Dest -Directory | ForEach-Object {
+            if ($RepoNames -notcontains $_.Name) {
+                Remove-Item -Path $_.FullName -Recurse -Force
+                Write-Host "  pruned skills/$($_.Name)"
+                $pruned++
+            }
+        }
+    }
+
+    Write-Host "Installed $count skill(s) to $Dest"
+    if ($Prune) {
+        Write-Host "Pruned $pruned stale skill(s)"
+    }
+}
+
 Install-Subdir -Subdir "agents"
 Write-Host ""
 Install-Subdir -Subdir "commands"
+Write-Host ""
+Install-Skills
 
 Write-Host ""
 Write-Host "Restart Claude Code if it was already running."
