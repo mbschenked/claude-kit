@@ -43,9 +43,11 @@ Add or edit agents in `agents/`, commit, push. Pull on the other machine and re-
 
 ## Subagents
 
-| Agent | Purpose | Tools |
-|---|---|---|
-| `subagent-design-reviewer` | Review a proposed subagent's design before implementation. Critiques scope, tool grants, trigger clarity, role overlap, and known anti-patterns. Returns a structured verdict. Read-only — cannot create or modify files. | Read, Glob, Grep |
+| Agent | Purpose | Tools | Source |
+|---|---|---|---|
+| `subagent-design-reviewer` | Review a proposed subagent's design before implementation. Critiques scope, tool grants, trigger clarity, role overlap, and known anti-patterns. Returns a structured verdict. Read-only. | Read, Glob, Grep | Custom |
+| `research-scout` | Default research agent: takes a question, does the messy fetching/reading/grepping in isolation, returns a 6-section brief with `[verified/inferred/speculative]` confidence tags and `[T1/T2/T3]` source-tier flags. Pairs with the `research-brief` skill (preloaded). For code-repo questions, also reads `.gitignore` / `.gitmodules` / `.git/logs/HEAD` / root config files. Memory at `~/.claude/agent-memory/research-scout/`. | WebFetch, WebSearch, Read, Grep, Glob | Custom |
+| `research-analyst` | Heavier-weight counterpart to `research-scout`. Produces long-form multi-section reports (executive summary, detailed findings, methodology note, sources, open questions, recommendations) for strategic / comprehensive / multi-source analysis. Use when narrative breadth matters more than tight discipline. | Read, Grep, Glob, WebFetch, WebSearch | Adapted from [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) (`categories/10-research-analysis/research-analyst.md`), hardened — removed forbidden cross-agent invocation patterns, mock JSON progress numbers, and fictional "Communication Protocol" templates |
 
 ## Slash commands
 
