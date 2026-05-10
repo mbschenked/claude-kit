@@ -97,11 +97,31 @@ function Install-Skills {
     }
 }
 
+function Install-Statusline {
+    $Src = Join-Path $RepoDir "scripts\statusline-command.ps1"
+    $Dest = Join-Path $env:USERPROFILE ".claude\statusline-command.ps1"
+
+    if (-not (Test-Path $Src)) {
+        return
+    }
+
+    $DestDir = Split-Path $Dest -Parent
+    if (-not (Test-Path $DestDir)) {
+        New-Item -ItemType Directory -Path $DestDir -Force | Out-Null
+    }
+
+    Copy-Item -Path $Src -Destination $Dest -Force
+    Write-Host "  installed statusline-command.ps1"
+    Write-Host "Installed statusline-command.ps1 to $Dest"
+}
+
 Install-Subdir -Subdir "agents"
 Write-Host ""
 Install-Subdir -Subdir "commands"
 Write-Host ""
 Install-Skills
+Write-Host ""
+Install-Statusline
 
 Write-Host ""
 Write-Host "Restart Claude Code if it was already running."

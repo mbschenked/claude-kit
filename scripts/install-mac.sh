@@ -94,11 +94,25 @@ install_skills() {
   fi
 }
 
+install_statusline() {
+  local src="$REPO_DIR/scripts/statusline-command.sh"
+  local dest="$HOME/.claude/statusline-command.sh"
+
+  [ -f "$src" ] || return 0
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+  chmod +x "$dest"
+  echo "  installed statusline-command.sh"
+  echo "Installed statusline-command.sh to $dest"
+}
+
 install_dir agents
 echo
 install_dir commands
 echo
 install_skills
+echo
+install_statusline
 
 echo
 echo "Restart Claude Code if it was already running."

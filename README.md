@@ -9,7 +9,7 @@ agents/        Claude Code subagents (drop-in for ~/.claude/agents/)
 commands/      Claude Code slash commands (drop-in for ~/.claude/commands/)
 skills/        Claude Code skills (drop-in for ~/.claude/skills/, one dir per skill with SKILL.md)
 references/    Reference docs that inform agent design
-scripts/       Per-OS install scripts
+scripts/       Per-OS install scripts + the statusline-command renderers (deployed to ~/.claude/)
 ```
 
 ## Install
@@ -63,6 +63,27 @@ Add or edit agents in `agents/`, commit, push. Pull on the other machine and re-
 | `draft-critique` | Structured pushback on a written draft: audience read, claim-by-claim doubt/reconcile loop, severity-tagged cuts (Critical/Optional/Nit), strengths to preserve, explicit gaps, one-or-two-revision next pass. Borrows the `CLAIM → DOUBT → RECONCILE` pattern from `doubt-driven-development` and severity tags from code-review collections. | Custom |
 | `supabase` | Umbrella router for any Supabase task: Database, Auth, Edge Functions, Realtime, Storage, Vectors, Cron, Queues, client libs (`supabase-js`, `@supabase/ssr`), SSR integrations, auth flows, RLS, CLI, MCP, migrations, security audits, Postgres extensions. | Vendored from [`supabase/agent-skills`](https://github.com/supabase/agent-skills) v0.1.2 |
 | `supabase-postgres-best-practices` | Postgres performance and best practices: compact SKILL.md + 27 reference files covering indexes (partial/covering/composite/missing/jsonb), RLS performance, connection pooling, schema design, locks, monitoring, n+1 patterns. Wrong/right SQL with EXPLAIN output. | Vendored from [`supabase/agent-skills`](https://github.com/supabase/agent-skills) v1.1.1 |
+
+## Status line
+
+Cross-machine context-percentage status line. Shows `cwd | model | ctx: <percent>%` with color thresholds: **green** <33%, **yellow** 33–60%, **red** >60% (Max's `/clear` decision trigger).
+
+| File | Purpose |
+|---|---|
+| `scripts/statusline-command.sh` | Bash renderer — deployed to `~/.claude/statusline-command.sh` by `install-mac.sh` |
+| `scripts/statusline-command.ps1` | PowerShell renderer — deployed to `%USERPROFILE%\.claude\statusline-command.ps1` by `install-win.ps1` |
+
+**Wire-up in `settings.json`** (one-time, per machine):
+
+```jsonc
+// Mac (~/.claude/settings.json)
+{ "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" } }
+
+// Windows (%USERPROFILE%\.claude\settings.json)
+{ "statusLine": { "type": "command", "command": "powershell -NoProfile -File %USERPROFILE%\\.claude\\statusline-command.ps1" } }
+```
+
+Don't edit the deployed copies directly — edit the kit versions and re-run the install script.
 
 ## References
 
