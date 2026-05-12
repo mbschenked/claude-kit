@@ -24,11 +24,34 @@ CLI:
 
 import argparse
 import json
+import re
 import sys
 import zlib
 from pathlib import Path
 
 import genanki
+
+
+CODE_BLOCK_RE = re.compile(r"(<code>)(.*?)(</code>)", re.DOTALL | re.IGNORECASE)
+
+
+def escape_code_blocks(html: str) -> str:
+    """Escape <, >, & inside <code>...</code> tags so genanki doesn't drop them.
+
+    Order matters: & must escape first, otherwise `<` → `&lt;` would then have its
+    `&` re-escaped to `&amp;`, producing `&amp;lt;`. Outside <code>, raw HTML passes
+    through so <em>/<strong>/<br>/<ul>/<li>/<kbd> all work as intended.
+    """
+    def _escape(match: "re.Match[str]") -> str:
+        opening, inner, closing = match.group(1), match.group(2), match.group(3)
+        escaped = (
+            inner.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+        )
+        return opening + escaped + closing
+
+    return CODE_BLOCK_RE.sub(_escape, html)
 
 
 MODEL_ID = 1759834521
@@ -185,18 +208,20 @@ def validate_card(card: dict, idx: int) -> None:
 
 
 def build_note(card: dict, model: genanki.Model, deck_name: str, default_source: str) -> genanki.Note:
-    front = card["front"]
-    back = card["back"]
+    front = escape_code_blocks(card["front"])
+    back = escape_code_blocks(card["back"])
     tags = card.get("tags", [])
     source = card.get("source") or default_source or ""
 
     tags_display = " · ".join(tags) if tags else ""
 
+    # GUID derived from the *original* front so existing review history survives
+    # the escaping change — re-importing the same source produces matching GUIDs.
     return genanki.Note(
         model=model,
         fields=[front, back, tags_display, source],
         tags=tags,
-        guid=genanki.guid_for(front + "::" + deck_name),
+        guid=genanki.guid_for(card["front"] + "::" + deck_name),
     )
 
 

@@ -1,17 +1,12 @@
 ---
 name: anki-deck
-description: Convert a markdown file, plain text, or URL into a Destiny 2-themed Anki flashcard deck (.apkg). Cards are atomic (one fact each), target non-obvious content (rules, gotchas, definitions, decision criteria), and filter out structural trivia. Invoke when the user asks to "make an anki deck from X," "convert X to flashcards," "build cards from X," or types `/anki-deck`. Input: any text-based source. Output: an importable `.apkg` file plus a summary of card count.
+description: Convert a text source (markdown, plain text, or URL) into an Anki flashcard deck (.apkg). Produces atomic Q/A cards — one fact each — targeting non-obvious content like rules, gotchas, definitions, and decision criteria. Not for cloze deletion, image-heavy sources, or one-shot reference cards.
+when_to_use: User asks to "make an anki deck from X," "convert X to flashcards," "build cards from X," or types `/anki-deck`. Also after a user reads or pastes a source and signals they want it converted to spaced-repetition cards.
 ---
 
 # anki-deck — convert a source into styled Anki flashcards
 
 When invoked, the user wants atomic flashcards extracted from a source and packaged as a styled `.apkg` they can import directly into Anki. Card extraction is your judgment job; `.apkg` assembly is `generate.py`'s job.
-
-## When this fires
-
-- User types `/anki-deck` or `/anki-deck <path>`.
-- User asks: "make an anki deck from X," "convert X to flashcards," "build cards from X," "turn X into an Anki deck," or close paraphrase.
-- After a user reads or pastes a source and signals they want it converted to spaced-repetition cards.
 
 If the source is empty or trivially short (a single sentence), say so plainly and ask for more material. Don't invent cards to fill the count.
 
@@ -29,10 +24,9 @@ If `import genanki` fails when you run `generate.py`, surface the `pip install` 
 ## Procedure
 
 1. **Read the source.** Use the Read tool. If it's a URL, fetch it. If it's pasted text in the conversation, use that directly.
-2. **Extract atomic cards.** Follow the rules below and the worked examples in `references/good-cards.md`. Filter against the anti-patterns in `references/bad-cards.md`. For a dense source (numbered tips, rules lists, glossaries), expect 1–2 cards per logical unit. For prose, expect 1 card per ~150–300 words of substantive content.
-3. **Pre-escape HTML.** `<`, `>`, `&` inside code samples and generics (`List<T>`) must be substituted to `&lt;`, `&gt;`, `&amp;` *before* you write them into JSON. genanki passes fields through unescaped.
-4. **Write the JSON.** Schema below. Save to a temp file (e.g. `/tmp/anki-cards-<topic>.json`).
-5. **Invoke generate.py.** Run via Bash:
+2. **Extract atomic cards.** Follow the rules below and the worked examples in `references/good-cards.md`. Filter against the anti-patterns in `references/bad-cards.md`. For a dense source (numbered tips, rules lists, glossaries), expect 1–2 cards per logical unit. For prose, expect 1 card per ~150–300 words of substantive content. Wrap inline code samples in `<code>...</code>` — `generate.py` escapes `<`, `>`, `&` inside those tags automatically; do not pre-escape.
+3. **Write the JSON.** Schema below. Save to a temp file (e.g. `/tmp/anki-cards-<topic>.json`).
+4. **Invoke generate.py.** Run via Bash:
    ```bash
    python3 ~/.claude/skills/anki-deck/generate.py \
      --input /tmp/anki-cards-<topic>.json \
@@ -40,9 +34,7 @@ If `import genanki` fails when you run `generate.py`, surface the `pip install` 
      --deck-name "<Human-readable deck name>" \
      --source-url "<optional default source for cards lacking one>"
    ```
-6. **Confirm the output.** Report the absolute path to the `.apkg`, the card count, and the file size. Tell the user: "Import via Anki → File → Import → select this file."
-
-If the curriculum convention applies, save the `.apkg` to `~/ClaudeCode/ClaudeCurriculum/artifacts/week<N>/anki-deck-<source-slug>.apkg`.
+5. **Confirm the output.** Report the absolute path to the `.apkg`, the card count, and the file size. Tell the user: "Import via Anki → File → Import → select this file."
 
 ## Card extraction rules
 
@@ -82,7 +74,7 @@ The JSON is a non-empty list of card objects. Schema:
 
 These are the failure modes that have actually bitten this skill. Read before every run.
 
-1. **genanki does not escape HTML in fields.** If a card front contains `List<T>` as a literal type signature without escaping, Anki will try to parse `<T>` as a tag and silently drop it. Always substitute `<` → `&lt;`, `>` → `&gt;`, `&` → `&amp;` inside code samples *before* serializing JSON.
+1. **HTML escape is automatic inside `<code>` blocks.** `generate.py` escapes `<`, `>`, `&` inside `<code>...</code>` tags at note-build time. Do not pre-escape — you'll double-escape. Outside `<code>` blocks, raw HTML passes through, so `<em>`/`<strong>`/`<br>` work as intended.
 2. **`Tags_display` is a rendered field, not Anki's real tags.** The card template shows `{{Tags_display}}` (the joined string). Anki's actual filterable tags come from `genanki.Note(tags=...)`. `generate.py` handles both — your job is just to provide a clean hyphenated list in the `tags` array.
 3. **Editing a card's front after import creates a new card** (the GUID is derived from `front + deck_name`). Back edits are safe — same GUID, Anki updates in place. If you need to change a question stem, expect the old card to become orphaned with its review history. Re-import after the edit; you can delete the orphan in Anki's browser.
 4. **Tags with spaces silently become two tags.** This is the most common bug. `generate.py` asserts that all tags are space-free and will fail loudly — fix the tag list, don't bypass the assertion.

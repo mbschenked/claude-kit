@@ -46,7 +46,7 @@ Then import the `.apkg` in Anki: **File → Import → select file**.
 ]
 ```
 
-- HTML allowed in `front` / `back`. Pre-escape `<`, `>`, `&` inside `<code>` blocks.
+- HTML allowed in `front` / `back`. Wrap inline code samples in `<code>...</code>` — `generate.py` auto-escapes `<`, `>`, `&` inside those tags. Other HTML (`<em>`, `<strong>`, `<br>`, `<ul>`/`<li>`, `<kbd>`) passes through unchanged.
 - Tags must be hyphenated (Anki splits on whitespace).
 - `source` is optional — falls back to `--source-url` if omitted.
 
@@ -62,10 +62,10 @@ Then import the `.apkg` in Anki: **File → Import → select file**.
 ## Files
 
 - `SKILL.md` — main procedure Claude follows on invocation
-- `generate.py` — `genanki`-based `.apkg` builder; ~150 lines; argparse CLI
-- `references/destiny-theme.md` — color palette, type rationale, platform notes
-- `references/good-cards.md` — 7 worked examples with rationale
-- `references/bad-cards.md` — 8 anti-patterns + filtering checklist
+- `generate.py` — `genanki`-based `.apkg` builder; ~180 lines; argparse CLI
+- `references/good-cards.md` — 7 worked examples with rationale (loaded at runtime)
+- `references/bad-cards.md` — 8 anti-patterns + filtering checklist (loaded at runtime)
+- `docs/destiny-theme.md` — color palette, type rationale, platform notes (design rationale for humans editing the CSS, not runtime context)
 
 ## Determinism
 
