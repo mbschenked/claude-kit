@@ -106,6 +106,24 @@ install_statusline() {
   echo "Installed statusline-command.sh to $dest"
 }
 
+install_hooks() {
+  local dest_dir="$HOME/.claude/scripts"
+  local src_dir="$REPO_DIR/scripts"
+  mkdir -p "$dest_dir"
+
+  local count=0
+  for src in "$src_dir"/log-activity.sh "$src_dir"/reap-stale-activity.sh; do
+    [ -f "$src" ] || continue
+    name="$(basename "$src")"
+    cp "$src" "$dest_dir/$name"
+    chmod +x "$dest_dir/$name"
+    echo "  installed scripts/$name"
+    count=$((count + 1))
+  done
+
+  echo "Installed $count hook script(s) to $dest_dir"
+}
+
 install_dir agents
 echo
 install_dir commands
@@ -113,6 +131,8 @@ echo
 install_skills
 echo
 install_statusline
+echo
+install_hooks
 
 echo
 echo "Restart Claude Code if it was already running."
