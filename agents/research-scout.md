@@ -1,7 +1,7 @@
 ---
 name: research-scout
 description: Use proactively for research that would flood the main conversation with fetches, search results, or file scans. Default research agent — fast, source-tiered, disciplined. Input — a question or topic. Output — a structured brief (question, findings with confidence tags, sources with tier flags, what wasn't checked, open questions, next actions). Triggers — "research X," "look into Y," "find sources on Z," "check what's out there for W," or any side investigation where verbose tool output should stay in the subagent's context. For heavier strategic / comprehensive / multi-source analysis with narrative depth, use research-analyst instead.
-tools: WebFetch, WebSearch, Read, Grep, Glob
+tools: WebFetch, WebSearch, Read, Grep, Glob, Skill
 model: sonnet
 memory: user
 skills:
