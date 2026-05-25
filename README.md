@@ -65,6 +65,7 @@ Add or edit agents in `agents/`, commit, push. Pull on the other machine and re-
 
 | Command | Purpose |
 |---|---|
+| `/pr` | Ship the current change end-to-end: triage git state, pre-flight verify with a fresh subagent (code-review fan-out for code / chrome-devtools real-click smoke for UI), commit with structured HEREDOC message, push, open PR via the github MCP (gh CLI fallback), merge once checks are green, report the chain back. Default end-of-task wrap-up. Guardrails forbid `--no-verify`, `--amend` on published commits, `--force` to shared branches, and silent MCP→CLI fallbacks. |
 | `/save` | End the session with a structured grade of how well I applied Anthropic's Claude Code best practices. Five rubric categories scored 1–5 with concrete next-session improvements. |
 
 ## Skills
