@@ -2,7 +2,7 @@
 name: code-review-worker
 description: Single-pass, single-perspective code-review worker. Primarily invoked as one of the parallel axis-focused workers by the `/code-reviewer` fan-out command — that command, not this agent, is the default for "review this code." Can also be run standalone for a deliberately quick single-perspective pass when full fan-out is overkill (e.g. a one-file trivial change), or as the single-arm baseline in reviewer benchmarks. NOT auto-proactive: do not spawn this on every code write — a real review is the `/code-reviewer` fan-out, run from the main session. The caller must specify scope (files / git diff) and, when used as a fan-out worker, the single assigned axis.
 tools: Read, Grep, Glob
-model: opus
+model: sonnet
 color: green
 ---
 
