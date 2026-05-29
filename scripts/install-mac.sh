@@ -3,7 +3,7 @@
 # Idempotent: safe to re-run after a `git pull`.
 #
 # Usage: bash install-mac.sh [--prune]
-#   --prune  remove .md files in ~/.claude/{agents,commands}/ that aren't in this repo
+#   --prune  remove .md files in ~/.claude/{agents,commands,rules}/ that aren't in this repo
 
 set -euo pipefail
 
@@ -106,6 +106,22 @@ install_statusline() {
   echo "Installed statusline-command.sh to $dest"
 }
 
+# Ensure the Check-5 install-floor plugins are present and enabled. Idempotent:
+# re-running install/enable on an already-set plugin is a harmless no-op.
+install_plugins() {
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "claude CLI not found on PATH — skipping plugin provisioning"
+    return 0
+  fi
+  local plugins=(session-report commit-commands claude-md-management)
+  for p in "${plugins[@]}"; do
+    claude plugin install "$p@claude-plugins-official" >/dev/null 2>&1 || true
+    claude plugin enable "$p@claude-plugins-official" >/dev/null 2>&1 || true
+    echo "  ensured plugin $p (installed + enabled)"
+  done
+  echo "Ensured ${#plugins[@]} floor plugin(s)"
+}
+
 install_hooks() {
   local dest_dir="$HOME/.claude/scripts"
   local src_dir="$REPO_DIR/scripts"
@@ -128,11 +144,15 @@ install_dir agents
 echo
 install_dir commands
 echo
+install_dir rules
+echo
 install_skills
 echo
 install_statusline
 echo
 install_hooks
+echo
+install_plugins
 
 echo
 echo "Restart Claude Code if it was already running."

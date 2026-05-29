@@ -2,7 +2,7 @@
 # Idempotent: safe to re-run after a `git pull`.
 #
 # Usage: .\install-win.ps1 [-Prune]
-#   -Prune  remove .md files in %USERPROFILE%\.claude\{agents,commands}\ that aren't in this repo
+#   -Prune  remove .md files in %USERPROFILE%\.claude\{agents,commands,rules}\ that aren't in this repo
 
 param(
     [switch]$Prune
@@ -115,13 +115,33 @@ function Install-Statusline {
     Write-Host "Installed statusline-command.ps1 to $Dest"
 }
 
+function Install-Plugins {
+    # Ensure the Check-5 install-floor plugins are present and enabled. Idempotent:
+    # re-running install/enable on an already-set plugin is a harmless no-op.
+    if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
+        Write-Host "claude CLI not found on PATH — skipping plugin provisioning"
+        return
+    }
+    $plugins = @("session-report", "commit-commands", "claude-md-management")
+    foreach ($p in $plugins) {
+        & claude plugin install "$p@claude-plugins-official" *> $null
+        & claude plugin enable "$p@claude-plugins-official" *> $null
+        Write-Host "  ensured plugin $p (installed + enabled)"
+    }
+    Write-Host "Ensured $($plugins.Count) floor plugin(s)"
+}
+
 Install-Subdir -Subdir "agents"
 Write-Host ""
 Install-Subdir -Subdir "commands"
 Write-Host ""
+Install-Subdir -Subdir "rules"
+Write-Host ""
 Install-Skills
 Write-Host ""
 Install-Statusline
+Write-Host ""
+Install-Plugins
 
 Write-Host ""
 Write-Host "Restart Claude Code if it was already running."
