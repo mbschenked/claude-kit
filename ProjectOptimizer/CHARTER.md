@@ -1,8 +1,10 @@
 # ProjectOptimizer — Role Charter
 
-**Version:** 1.1
+**Version:** 1.2
 **Owner:** Max Schenk
-**Date:** 2026-05-28
+**Date:** 2026-05-29
+
+*v1.2 — comparative pass against `StarkillerObl/claude-code-agents` (2026-05-29): added the orchestrator/planner/doer role-taxonomy lens to Check 3 and the enforced-over-advisory remediation framing to §6. See §9 for what that repo contributed and what was deliberately not adopted.*
 
 *v1.1 — source refresh against the four canonical sources (verified 2026-05-28): added `opusplan`; corrected the conditional-CLAUDE.md mechanism to `.claude/rules/` + `paths:`; noted bundled built-in skills; updated the official-plugins source to `claude-plugins-official`; added skill context-lifecycle tactics.*
 
@@ -163,6 +165,8 @@ Bundles multiple of the above into one installable unit?
 
 Five checks, run in order and in parallel where possible. Each has a pass bar, a flag trigger, and a default remedy.
 
+**Express every remedy as an enforced change, not advice.** A finding that resolves to "be more careful" or "consider trimming" rarely changes behavior — passive guidance gets ignored the same way an unenforced rule buried in a doc does. Where possible, phrase the remedy as a concrete edit to the primitive that makes the wrong behavior *harder to repeat*: remove a tool from an agent's grant rather than telling it not to use the tool; add a `paths:` scope rather than asking the model to ignore an irrelevant rule; convert a thrice-repeated manual correction into a `hookify` block rather than just noting the pattern. The audit's value is the enforceable delta, not the observation.
+
 ### Check 1 — Session cost and token audit
 
 **What to look at.** The transcript JSONL for the most recent session (or a representative one). Token usage by phase, cache hit rate, subagent activity, top cost drivers. Files live under `~/.claude/projects/<encoded-project-path>/`.
@@ -196,6 +200,14 @@ Five checks, run in order and in parallel where possible. Each has a pass bar, a
 **Flag trigger.** A subagent doing work a skill could handle in-session. A skill doing work that needed isolation, now bloating main context. A hook trying to invoke a named subagent (unsupported). Multi-primitive workflows scattered across separate files instead of bundled in a plugin.
 
 **Remedy.** Propose the corrected primitive for each misfit, with a migration path. For skill-to-subagent migration, note that `context: fork` plus an `agent:` field is the shortest route.
+
+**Role-taxonomy lens (tool-fit by agent function).** Primitive-type fit asks "should this be a skill or a subagent?" This lens asks a second question of every subagent: *what is its functional role, and does its tool grant match?* Classify each into one of three roles and flag the contradictions:
+
+- **Orchestrators** coordinate and delegate (e.g. a `workflow-orchestrator`, or the dispatch agent behind a `/feature-dev`-style command). They should be **read-and-delegate only** — flag any orchestrator holding `Edit`, `Write`, or `MultiEdit`. An orchestrator that edits code has stopped delegating and collapsed the separation that makes the workflow auditable; "it was just one line" is the canonical way the boundary erodes.
+- **Planners** analyze, design, and specify (e.g. `code-architect`, Plan-mode agents). They should emit *actionable, file-level* output and need no write access beyond their own plan artifact — flag a planner whose output is too vague to implement, and a planner granted broad code-write tools it never uses.
+- **Doers** implement (an `implementer` subagent, most task-specific agents). They get write access **scoped to what they actually edit** — flag unrestricted `*` access (the §8 tool-access anti-pattern seen from the role angle) and any doer that sub-delegates instead of doing the work.
+
+The flag is a tool grant that contradicts the role, independent of whether the primitive *type* is already correct — a subagent can be the right primitive and still the wrong shape. Remedy per the enforced-change rule above: cut the offending tool from the grant, don't add a "please don't edit" instruction.
 
 ---
 
@@ -334,6 +346,7 @@ The consultant's knowledge base draws on these four sources plus their linked do
 **Supplementary reference (workflow patterns):**
 
 - [ghuntley.com/ralph/](https://ghuntley.com/ralph/) — the canonical write-up of the Ralph loop pattern referenced in §4.3. Documents the bash `while true` mechanic and the operator philosophy ("iteration > perfection," "failures are data").
+- [StarkillerObl/claude-code-agents](https://github.com/StarkillerObl/claude-code-agents) — a hand-rolled multi-agent framework (orchestrator/planner/doer agents + a `shared-standards/` doctrine folder), reviewed comparatively 2026-05-29. Source for the orchestrator/planner/doer role-taxonomy lens (Check 3) and the enforced-over-advisory remediation framing (§6). Its heavier machinery — global `DDMM_YYYY_NN` session-folder numbering, `PPP-SSS` file naming, mandatory JSON reports, per-file signatures — is deliberately **not** adopted: it reimplements orchestration the native Workflow tool and skills now provide, and its own README concedes agents ignore the shared-standards files unless each rule is copy-pasted into every agent — the manual doctrine-duplication this single-source charter exists to avoid. A useful contrast as much as a source.
 
 Full source brief with confidence flags and open questions: `/Users/mbschenk/.claude/plans/research-brief-projectoptimizer.md`.
 
