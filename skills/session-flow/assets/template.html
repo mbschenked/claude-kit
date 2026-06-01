@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Session Flow</title>
+<style>
+  /* Rajdhani = condensed geometric HUD face (Destiny-flavored); Barlow = body.
+     Loads from Google Fonts when online; degrades to system sans offline. */
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap');
+  /* ---- Destiny 2-inspired palette (researched: color-hex rarity palette,
+     ColorsWall UI extractions, Bungie designer portfolios, Bungie API element
+     colors). Blue-shifted void + Exotic gold + subclass element accents. ---- */
+  :root {
+    --bg:            #0e1118;   /* near-black void (space-blue shift) */
+    --bg-2:          #11151f;
+    --panel:         #161b27;   /* lifted card/panel */
+    --panel-2:       #1b2231;
+    --border:        rgba(255,255,255,0.08);
+    --border-strong: #304151;
+    --text:          #e5e8ee;   /* cool near-white */
+    --text-muted:    #8a8f9e;
+    --accent:        #cdad36;   /* Exotic gold = main thread / decisions */
+    --accent-bright: #e8c84a;
+    --subagent:      #79c8ff;   /* Arc cyan-blue = subagent nodes + edges */
+    --skill:         #28e477;   /* Strand green = skill / slash nodes */
+    --user:          #c9cdd8;   /* neutral cream = user prompts */
+    --edge-branch:   rgba(156,84,204,0.65); /* Void purple (reserved) */
+    --glow-gold:   0 0 12px rgba(205,173,54,0.45), 0 0 28px rgba(205,173,54,0.16);
+    --glow-cyan:   0 0 10px rgba(121,200,255,0.35);
+    --display: 'Rajdhani', ui-sans-serif, 'Segoe UI', system-ui, sans-serif;
+    --font: 'Barlow', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #16203250 0%, transparent 60%),
+      radial-gradient(900px 500px at 90% 0%, #1a182a40 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* faint Director-map grid + grain for atmosphere (purely decorative) */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(121,200,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(121,200,255,0.035) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(120% 90% at 50% 0%, #000 35%, transparent 80%);
+  }
+  body > * { position: relative; z-index: 1; }
+
+  header.bar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+    padding: 14px 22px;
+    background: linear-gradient(180deg, #0e1118f2, #0e1118cc);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+  }
+  header.bar h1 {
+    font-family: var(--display);
+    font-size: 19px; font-weight: 700; margin: 0; letter-spacing: .26em;
+    text-transform: uppercase; color: var(--accent);
+    text-shadow: var(--glow-gold);
+  }
+  header.bar h1::before { content: '◢ '; color: var(--accent-bright); opacity: .8; }
+  header.bar .meta { font-size: 12px; color: var(--text-muted); font-family: var(--mono); }
+  header.bar .meta b { color: var(--text); font-weight: 500; }
+  .legend { display: flex; gap: 14px; margin-left: auto; font-size: 11px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .sw-decision { background: var(--accent); }
+  .sw-subagent { background: var(--subagent); }
+  .sw-skill    { background: var(--skill); }
+  .sw-user     { background: var(--user); }
+
+  .session-label {
+    padding: 16px 22px 4px; font-family: var(--mono); font-size: 12px;
+    color: var(--text-muted); letter-spacing: .04em;
+  }
+  .session-label b { color: var(--accent-bright); }
+
+  /* Vertical flow: the page scrolls top-to-bottom. Columns scroll sideways only
+     if a delegation has more parallel subagents than fit the viewport width. */
+  .flow-scroll { overflow-x: auto; overflow-y: visible; padding: 8px 22px 48px; }
+  .flow-scroll::-webkit-scrollbar { height: 12px; width: 12px; }
+  .flow-scroll::-webkit-scrollbar-track { background: #0c0f16; }
+  .flow-scroll::-webkit-scrollbar-thumb { background: #2a3344; border-radius: 6px; }
+  .flow-scroll::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+  .flow-canvas { position: relative; }
+  .flow-canvas svg.edges { position: absolute; inset: 0; pointer-events: none; }
+
+  @keyframes nodeIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .node {
+    position: absolute; padding: 11px 13px;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border); border-left-width: 3px;
+    border-radius: 8px; cursor: default;
+    box-shadow: 0 6px 18px #00000055;
+    transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+    opacity: 0; animation: nodeIn .42s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  .node:hover { transform: translateY(-3px); }
+  .node:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+  .node .kind {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .2em; text-transform: uppercase;
+    margin-bottom: 4px; opacity: .9;
+  }
+  .node .title {
+    font-family: var(--display); font-size: 16px; font-weight: 600; color: var(--text);
+    line-height: 1.15; letter-spacing: .01em; margin-bottom: 5px; word-break: break-word;
+  }
+  .node .blurb { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; word-break: break-word; }
+  .node .chips { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    font-family: var(--mono); font-size: 9.5px; padding: 1px 6px; border-radius: 999px;
+    background: #0e131d; border: 1px solid var(--border); color: var(--text-muted);
+  }
+
+  .node--user     { border-left-color: var(--user); }
+  .node--user .kind { color: var(--user); }
+  .node--user.interrupt { border-left-color: #d9534f; }
+  .node--user.interrupt .kind { color: #e0736f; }
+
+  .node--decision { border-left-color: var(--accent); box-shadow: 0 6px 18px #00000055, var(--glow-gold); }
+  .node--decision .kind { color: var(--accent-bright); }
+
+  .node--skill    { border-left-color: var(--skill); }
+  .node--skill .kind { color: var(--skill); }
+  .node--skill .title { color: var(--skill); }
+
+  .node--subagent { border-left-color: var(--subagent); border-color: rgba(121,200,255,0.25); cursor: pointer; }
+  .node--subagent .kind { color: var(--subagent); }
+  .node--subagent .title { color: var(--subagent); }
+  .node--subagent:hover { box-shadow: 0 6px 18px #00000055, var(--glow-cyan); }
+  .node--subagent .expand {
+    display: none; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--text-muted); line-height: 1.45;
+  }
+  .node--subagent.open .expand { display: block; }
+  .node--subagent .expand .lbl { color: var(--subagent); font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; display: block; margin: 6px 0 2px; }
+  .node--subagent .caret { float: right; color: var(--subagent); font-size: 10px; opacity: .7; }
+  .node--subagent.noresult { border-left-color: #d9534f; }
+
+  .empty { padding: 40px 22px; color: var(--text-muted); font-family: var(--mono); }
+
+  svg.edges path { animation: edgeDraw .9s ease forwards; }
+  @keyframes edgeDraw { to { stroke-dashoffset: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .node { animation: none !important; opacity: 1 !important; }
+    svg.edges path { animation: none !important; stroke-dashoffset: 0 !important; }
+    .node:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <h1>Session Flow</h1>
+  <div class="meta" id="meta"></div>
+  <div class="legend">
+    <span><i class="swatch sw-user"></i>user</span>
+    <span><i class="swatch sw-decision"></i>decision</span>
+    <span><i class="swatch sw-subagent"></i>subagent</span>
+    <span><i class="swatch sw-skill"></i>skill</span>
+  </div>
+</header>
+<div id="root"></div>
+
+<script id="flow-data" type="application/json">__FLOW_DATA__</script>
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById('flow-data').textContent);
+  const root = document.getElementById('root');
+  const meta = document.getElementById('meta');
+
+  // ---- Grid units. The flow runs TOP→BOTTOM (vertical scroll). The page is a
+  // grid: COL_W wide columns × ROW_U tall row-units. Every node occupies whole
+  // grid cells — 1 column wide, and an integer number of row-units tall (busy
+  // nodes span more). Column 0 is the main lane (the spine); columns 1+ are
+  // subagent lanes that a delegation splays into. ----
+  const COL_W = 320;   // column width (px)
+  const ROW_U = 80;    // one grid row-unit (px)
+  const PAD = 24;      // outer margin (px)
+  const HGAP = 22;     // horizontal gutter inside a column
+  const VGAP = 16;     // vertical gutter inside a row-unit span
+  const CARD_W = COL_W - HGAP;
+
+  function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+  // MCP tool names are long (mcp__server__method); show the method only, capped.
+  function shortTool(name) {
+    let s = String(name);
+    if (s.startsWith('mcp')) { const p = s.split(/__/); s = p[p.length - 1]; }
+    return s.length > 20 ? s.slice(0, 19) + '…' : s;
+  }
+  function chips(toolCounts) {
+    const keys = Object.keys(toolCounts || {});
+    if (!keys.length) return '';
+    keys.sort((a, b) => toolCounts[b] - toolCounts[a]);
+    let html = keys.slice(0, 6).map(k =>
+      `<span class="chip" title="${esc(k)}">${esc(shortTool(k))}×${toolCounts[k]}</span>`).join('');
+    if (keys.length > 6) html += `<span class="chip">+${keys.length - 6}</span>`;
+    return '<div class="chips">' + html + '</div>';
+  }
+
+  function nodeHTML(n) {
+    const cls = ['node', 'node--' + n.kind];
+    if (n.interrupt) cls.push('interrupt');
+    if (n.no_result) cls.push('noresult');
+    let inner = `<div class="kind">${esc(n.kind === 'skill' && n.via === 'slash' ? 'slash command' : n.kind)}`;
+    if (n.kind === 'subagent') inner += `<span class="caret">▸ details</span>`;
+    inner += `</div>`;
+    inner += `<div class="title">${esc(n.title)}</div>`;
+    if (n.blurb) inner += `<div class="blurb">${esc(n.blurb)}</div>`;
+    inner += chips(n.toolCounts);
+    if (n.kind === 'subagent') {
+      inner += `<div class="expand">`;
+      if (n.prompt_head) inner += `<span class="lbl">tasked with</span>${esc(n.prompt_head)}`;
+      if (n.result_snippet) inner += `<span class="lbl">returned</span>${esc(n.result_snippet)}`;
+      if (!n.prompt_head && !n.result_snippet) inner += `(no captured detail)`;
+      inner += `</div>`;
+    }
+    const el = document.createElement('div');
+    el.className = cls.join(' ');
+    el.style.width = CARD_W + 'px'; // fixed column width; x/y/min-height set after measuring
+    el.innerHTML = inner;
+    n._el = el;
+    if (n.kind === 'subagent') {
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-expanded', 'false');
+      const toggle = () => {
+        const open = el.classList.toggle('open');
+        el.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+      el.addEventListener('click', toggle);
+      el.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(); }
+      });
+    }
+    return el;
+  }
+
+  // How many grid row-units a node occupies. Content-heavy nodes span more —
+  // this is the "some nodes take up more, always in whole grid units" rule.
+  function rowSpan(n) {
+    const blurb = (n.blurb || '').length;
+    const chips = Object.keys(n.toolCounts || {}).length;
+    if (n.kind === 'subagent') return chips > 0 ? 3 : 2;
+    if (n.kind === 'skill') return 1;
+    // user / decision
+    if (blurb > 170 || chips > 4) return 3;
+    if (blurb > 40 || chips > 0) return 2;
+    return 1;
+  }
+
+  // Whole-grid-unit span for a node: at least the kind's estimate, but always
+  // enough to contain its measured height (set in the measure pass) so cards
+  // never overflow their cell and overlap the next one.
+  function spanOf(n) {
+    const est = rowSpan(n);
+    if (n._measured) return Math.max(est, Math.ceil((n._measured + VGAP) / ROW_U));
+    return est;
+  }
+
+  // Place every node on the grid. Walk top→bottom keeping a row-unit cursor.
+  // A main node sits in column 0 and advances the cursor. A parallel-subagent
+  // run gets its own row-band, padded by one empty "routing" row above and below
+  // so the right-angle spawn/return connectors have clean space to turn in.
+  function layout(nodes) {
+    let row = 0, maxCol = 0;
+    for (let i = 0; i < nodes.length;) {
+      if (nodes[i].lane === 'main') {
+        const n = nodes[i];
+        place(n, 0, row, spanOf(n));
+        n._delay = row * 0.012;
+        row += n._rows;
+        i++;
+      } else {
+        let j = i; while (j < nodes.length && nodes[j].lane === 'sub') j++;
+        const group = nodes.slice(i, j);
+        row += 1; // routing row for the spawn connectors
+        const span = Math.max(...group.map(spanOf));
+        group.forEach((n, k) => {
+          place(n, 1 + k, row, span);
+          n._delay = row * 0.012 + 0.08 + k * 0.04;
+          maxCol = Math.max(maxCol, 1 + k);
+        });
+        row += span;
+        row += 1; // routing row for the return connectors
+        i = j;
+      }
+    }
+    return { width: PAD * 2 + (maxCol + 1) * COL_W, height: PAD * 2 + row * ROW_U };
+  }
+
+  function place(n, col, row, rows) {
+    n._col = col; n._row = row; n._rows = rows;
+    n.x = PAD + col * COL_W;
+    n.y = PAD + row * ROW_U;
+    n.w = CARD_W;
+    n.h = rows * ROW_U - VGAP;
+  }
+
+  function cx(n) { return n.x + n.w / 2; }
+  // Orthogonal connectors only — straight segments + right angles, no curves.
+  // Every edge runs: down out of the source, across a "routing row" bus, then
+  // down into the destination. When source and destination share a column
+  // (the main spine) the cross segment has zero length, i.e. a straight line.
+  function edgePath(from, to, kind) {
+    const sx = cx(from), sy = from.y + from.h;     // source bottom-center
+    const tx = cx(to),   ty = to.y;                // destination top-center
+    const busY = ty - ROW_U / 2;                   // mid the routing row above dest
+    if (sx === tx) return `M${sx},${sy} L${tx},${ty}`; // pure vertical (spine)
+    return `M${sx},${sy} L${sx},${busY} L${tx},${busY} L${tx},${ty}`;
+  }
+
+  function renderFlow(flow, container) {
+    const wrap = document.createElement('div');
+    wrap.className = 'flow-scroll';
+    const canvas = document.createElement('div');
+    canvas.className = 'flow-canvas';
+    wrap.appendChild(canvas);
+    container.appendChild(wrap);
+
+    // Pass 1 — build + append node cards at the fixed column width so the
+    // browser computes their real heights.
+    flow.nodes.forEach(n => canvas.appendChild(nodeHTML(n)));
+    // Pass 2 — measure each card; record how many whole grid units it needs.
+    flow.nodes.forEach(n => { n._measured = n._el.offsetHeight; });
+    // Pass 3 — pack onto the grid using those measured spans (no overlap).
+    const dims = layout(flow.nodes);
+    canvas.style.width = dims.width + 'px';
+    canvas.style.height = dims.height + 'px';
+    // Pass 4 — position each card in its grid cell.
+    flow.nodes.forEach(n => {
+      const el = n._el;
+      el.style.left = n.x + 'px';
+      el.style.top = n.y + 'px';
+      el.style.minHeight = n.h + 'px';
+      el.style.animationDelay = (n._delay || 0) + 's';
+    });
+
+    // Pass 5 — draw orthogonal edges beneath the cards.
+    const byId = {}; flow.nodes.forEach(n => byId[n.id] = n);
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('class', 'edges');
+    svg.setAttribute('width', dims.width); svg.setAttribute('height', dims.height);
+    const colorFor = { seq: 'var(--accent)', spawn: 'var(--subagent)', return: 'var(--subagent)' };
+    (flow.edges || []).forEach(e => {
+      const from = byId[e.from], to = byId[e.to];
+      if (!from || !to) return;
+      const p = document.createElementNS(svgNS, 'path');
+      p.setAttribute('d', edgePath(from, to, e.kind));
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', colorFor[e.kind] || 'var(--border-strong)');
+      p.setAttribute('stroke-width', e.kind === 'seq' ? '2' : '1.5');
+      p.setAttribute('opacity', e.kind === 'return' ? '0.6' : '0.9');
+      p.setAttribute('stroke-linejoin', 'miter'); // crisp right angles
+      p.setAttribute('stroke-linecap', 'butt');
+      svg.appendChild(p);
+      const delay = ((to._delay || 0) - 0.05) + 's';
+      if (e.kind === 'return') {
+        p.setAttribute('stroke-dasharray', '5,4');
+        p.style.animation = 'none';
+      } else {
+        const len = p.getTotalLength();
+        p.style.strokeDasharray = len;
+        p.style.strokeDashoffset = len;
+        p.style.animationDelay = delay;
+      }
+    });
+    canvas.insertBefore(svg, canvas.firstChild); // edges behind the cards
+  }
+
+  function renderSummaryMeta(flow) {
+    const s = flow.summary || {};
+    const bits = [];
+    bits.push(`<b>${esc(flow.session ? flow.session.slice(0, 8) : 'multi')}</b>`);
+    bits.push(`${(flow.nodes || []).length} nodes`);
+    if (s.subagents) bits.push(`${s.subagents.length} subagents`);
+    const sk = (s.skills || []).length + (s.slash_commands || []).length;
+    if (sk) bits.push(`${sk} skill/command`);
+    return bits.join(' &nbsp;·&nbsp; ');
+  }
+
+  if (data.multi) {
+    meta.innerHTML = `<b>${esc(data.project)}</b> &nbsp;·&nbsp; ${data.sessions.length} sessions`;
+    data.sessions.forEach(flow => {
+      const label = document.createElement('div');
+      label.className = 'session-label';
+      if (flow.error) { label.innerHTML = `<b>${esc(flow.session)}</b> — ${esc(flow.error)}`; root.appendChild(label); return; }
+      label.innerHTML = `session <b>${esc(flow.session.slice(0,8))}</b> &nbsp; ${renderSummaryMeta(flow)}`;
+      root.appendChild(label);
+      renderFlow(flow, root);
+    });
+  } else if (data.error) {
+    root.innerHTML = `<div class="empty">${esc(data.error)}</div>`;
+  } else {
+    meta.innerHTML = `<b>${esc(data.project)}</b> &nbsp;·&nbsp; ${renderSummaryMeta(data)} &nbsp;·&nbsp; ${esc((data.generated_at||'').slice(0,16).replace('T',' '))}`;
+    renderFlow(data, root);
+  }
+})();
+</script>
+</body>
+</html>
