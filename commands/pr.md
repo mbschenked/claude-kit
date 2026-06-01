@@ -30,9 +30,9 @@ If the target branch is auto-deployed (or otherwise CLAUDE.md-gated) and the use
 The implementer false-passes its own work. Verification is delegated.
 
 **For code changes:**
-- Code-review fan-out (parallel `code-review-worker` subagents on 4 distinct axes — correctness, security, maintainability, project-constraints) is the default for substantive diffs.
-- Slim 2-axis fan-out is acceptable for tight scope (one file, ≤50 lines, clearly bounded).
-- Single-arm review is only acceptable for one-line / typo-class changes.
+- Run the bundled `/code-review` (its own parallel fan-out + confidence filter) on the diff — the default for substantive changes; use higher effort (`/code-review high`) for broad or risky diffs.
+- A lighter pass (`/code-review low` / `medium`) is acceptable for tight scope (one file, ≤50 lines, clearly bounded).
+- Review can be skipped only for one-line / typo-class changes.
 
 **For UI / interaction changes:**
 - A fresh subagent loads the page in a real browser (chrome-devtools MCP).
