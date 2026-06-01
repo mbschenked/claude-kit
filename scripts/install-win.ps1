@@ -1,4 +1,4 @@
-# install-win.ps1 — copy this kit's agents and commands into %USERPROFILE%\.claude\
+# install-win.ps1 - copy this kit's agents and commands into %USERPROFILE%\.claude\
 # Idempotent: safe to re-run after a `git pull`.
 #
 # Usage: .\install-win.ps1 [-Prune]
@@ -119,16 +119,30 @@ function Install-Plugins {
     # Ensure the Check-5 install-floor plugins are present and enabled. Idempotent:
     # re-running install/enable on an already-set plugin is a harmless no-op.
     if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
-        Write-Host "claude CLI not found on PATH — skipping plugin provisioning"
+        Write-Host "claude CLI not found on PATH - skipping plugin provisioning"
         return
     }
-    $plugins = @("session-report", "commit-commands", "claude-md-management")
-    foreach ($p in $plugins) {
-        & claude plugin install "$p@claude-plugins-official" *> $null
-        & claude plugin enable "$p@claude-plugins-official" *> $null
-        Write-Host "  ensured plugin $p (installed + enabled)"
+    # The npm `claude` shim relays benign "already installed/enabled" notices via stderr,
+    # which the script-level `$ErrorActionPreference = 'Stop'` would otherwise escalate into
+    # a terminating error and abort the loop on the first plugin. Relax it locally (and
+    # swallow each call) so re-runs stay genuinely idempotent.
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $plugins = @("session-report", "commit-commands", "claude-md-management")
+        foreach ($p in $plugins) {
+            try { & claude plugin install "$p@claude-plugins-official" *> $null } catch {}
+            try { & claude plugin enable  "$p@claude-plugins-official" *> $null } catch {}
+            Write-Host "  ensured plugin $p (installed + enabled)"
+        }
+        Write-Host "Ensured $($plugins.Count) floor plugin(s)"
     }
-    Write-Host "Ensured $($plugins.Count) floor plugin(s)"
+    finally {
+        $ErrorActionPreference = $prevEAP
+        # The trailing `claude plugin enable` can leave a non-zero $LASTEXITCODE even when
+        # "already enabled" is the desired no-op; reset it so a clean re-run exits 0.
+        $global:LASTEXITCODE = 0
+    }
 }
 
 Install-Subdir -Subdir "agents"
