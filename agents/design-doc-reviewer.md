@@ -84,7 +84,7 @@ Rate each finding 0–100 (0–25 likely false positive, 26–50 minor, 51–75 
 
 # Deployment / scope
 
-Lives in GameMakerKit (not the root kit) because it was born here as the generalization of `unreal-design-doc-reviewer` and ships/evolves alongside the TDD-generator bake-off that consumes it. It is domain-agnostic and earns promotion to the root kit (beside `code-reviewer`/`code-review-worker`) once it's proven outside game projects — until then it installs via GameMakerKit. The Unreal/GAS-specialized sibling is **`unreal-design-doc-reviewer`** (adds a first-class `gas-accuracy` axis). Use this one for general codebases, or for game projects where you'd rather pass the domain rules in by prompt than bake them in.
+Root kit, domain-agnostic (deploys via `install-mac.sh`). Promoted from the GameMakerKit TDD-generator bake-off that produced it; pairs with the `tdd-generator` skill and sits beside `code-reviewer`/`code-review-worker`. The Unreal/GAS-specialized sibling is **`unreal-design-doc-reviewer`** (adds a first-class `gas-accuracy` axis). Use this one for general codebases, or for game projects where you'd rather pass the domain rules in by prompt than bake them in.
 
 # Provenance
 

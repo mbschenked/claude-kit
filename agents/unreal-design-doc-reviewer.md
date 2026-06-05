@@ -82,7 +82,7 @@ Rate each finding 0–100 (0–25 likely false positive, 26–50 minor, 51–75 
 
 # Deployment / scope
 
-GameMakerKit, Unreal-specialized. Deploy at **user scope** via `install-mac.sh` if you review UE5/GAS docs across projects, or **project scope** (`.claude/agents/`) if GAS work is confined to one game. For non-Unreal codebases use the sibling **`design-doc-reviewer`** (same engine, no `gas-accuracy` axis; domain-specific accuracy supplied via the caller's prompt).
+Root kit, Unreal/GAS-specialized (deploys via `install-mac.sh`). Pairs with the `tdd-generator` skill as its quality gate. For non-Unreal codebases use the sibling **`design-doc-reviewer`** (same scoring engine, no `gas-accuracy` axis; domain-specific accuracy supplied via the caller's prompt).
 
 # Provenance
 
