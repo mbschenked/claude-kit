@@ -1,0 +1,96 @@
+---
+name: tdd-generator-ours
+description: Analyze a codebase — especially a UE5 C++/GAS game — and emit an architecture-first Technical Design Document in one disciplined, read-only pass: survey modules/systems, resolve unknowns by reading the code (not by asking), and write the TDD with no-fabrication / [ASSUMED] / [OPEN] discipline. Kit-native "Variant A" of the TDD-generator bake-off (siblings: tdd-generator-pocock, tdd-generator-hybrid).
+disable-model-invocation: true
+allowed-tools: Read, Grep, Glob
+---
+
+# tdd-generator-ours — codebase → Technical Design Document (kit-native variant)
+
+This is **Variant A** in the TDD bake-off: our discipline, end to end, no external pipeline. It produces an **architecture-first TDD** from a codebase in one structured pass. Analysis is read-only — you read the code and emit the document as your response; the calling session/workflow writes it to disk.
+
+## Lineage
+
+Built from the kit's own primitives. **Document discipline** is inherited from the `design-doc` skill (`skills/design-doc/SKILL.md`): no fabricated decisions, `[ASSUMED]`/`[OPEN]` tagging, preserve disagreement, final reader-test. **Codebase-first gap-filling** (resolve unknowns by reading the code before flagging them) is the one idea borrowed from Matt Pocock's `grill-me` method — but applied as a single internal pass, not an interactive interrogation. The TDD section template merges the standard software/game Technical Design Document outline with `design-doc`'s schema.
+
+## Step 1 — survey the codebase
+
+Detect the project type first, then extract.
+
+**Unreal Engine path** (a `*.uproject` exists). Use the bundled checklist `references/unreal-gas-extraction-checklist.md` and pull:
+- **Modules & build:** parse `*.uproject` (engine version, plugins) and every `*.Build.cs` (the `Public/PrivateDependencyModuleNames` dependency graph). Map module layering.
+- **GAS surface:** `UAbilitySystemComponent` setup; `UGameplayAbility` subclasses (active/passive); `UAttributeSet` + attributes; `UGameplayEffect` + any `UGameplayEffectExecutionCalculation`; `GameplayTags` taxonomy; `UAbilityTask` usage; `GameplayCues`.
+- **Actor/Component model:** `ACharacter`/`APawn` subclasses, component composition, `GameMode`/`GameState`/`PlayerController` flow.
+- **Input & AI:** EnhancedInput (InputActions/MappingContexts/InputTags); BehaviorTree/Blackboard topology.
+- **Data:** DataTables / DataAssets that drive behavior, and the row structs behind them.
+
+**Generic path** (no `*.uproject`). Identify languages, top-level modules/packages, entry points, the build/test commands, the dependency graph, and the dominant architectural pattern.
+
+Read enough real files to ground every claim. Prefer reading code over inferring.
+
+## Step 2 — resolve the gaps (codebase-first, single pass)
+
+Walk the open questions the survey raised. For each: if it can be answered by reading the code, read the code and answer it. Only what genuinely cannot be settled from the code becomes an `[OPEN]` item in the doc. Do **not** invent a decision to fill a gap.
+
+## Step 3 — emit the TDD (this template, in order)
+
+This template is the single source of truth — use it verbatim in this section order:
+
+```
+# <Project> — Technical Design Document
+
+## 1. One-liner / executive summary
+   What this system is and the single most important structural fact about it. If the
+   input doesn't support a sharp summary, write the best version and tag it [ASSUMED].
+
+## 2. Goals & non-goals
+   - Goals: bulleted, each independently checkable.
+   - Non-goals: explicitly out of scope.
+
+## 3. System architecture   ← LOAD-BEARING; give it the most room
+   The real structure. Sub-section per major system. Include:
+   - module / dependency map
+   - the central control + data flow (the "spine" of the system)
+   - component / ability stack (for GAS: who owns what, what is shared)
+   - an ASCII or described diagram of the core loop
+
+## 4. Key technical decisions   (ADR style)
+   Each: the decision · the one-line why · the alternative not taken.
+   Pull these out even when the code only implies them.
+
+## 5. Data model & DataTables
+   Row structs, data assets, and what behavior they drive. Schemas, not prose.
+
+## 6. Performance & budgets
+   Targets and hot paths if discoverable; tag [OPEN] if the code doesn't state them.
+
+## 7. Risks / unknowns
+   What could make this wrong or hard. Honest, not pro forma.
+
+## 8. Open questions
+   Phrased as questions, each tagged [OPEN]. The gaps, surfaced.
+
+## 9. Next steps
+   Imperative, ≤6 items, ordered by what unblocks the most.
+
+## Appendix — Unreal/GAS extension
+   GAS-specific mappings (component → ability/effect/tag), notify/cue catalog,
+   input-tag → ability bindings. Omit for non-Unreal projects.
+```
+
+Drop a section only if the codebase genuinely has nothing for it — leave the heading with `*(not present in codebase)*` so the gap is visible.
+
+## Step 4 — ground and gap-flag (the discipline)
+
+- **No fabricated decisions.** Unsettled → §8 `[OPEN]`, never invented into §3/§4 as if decided.
+- **Tag inferred connective tissue** `[ASSUMED]` so the reader sees where you bridged.
+- **Preserve disagreement.** If the code shows two competing approaches, record the tension; don't pick a winner.
+- **Cite the code.** Every architectural claim should be traceable to a file/type. Reference real paths.
+- **Reader-test §1 and §3** as someone with zero context before delivering: any undefined actor/system/term gets defined or flagged.
+
+## Guardrails
+
+- **Read-only.** No Write/Edit/Bash; emit the TDD as your response (the caller writes it to disk).
+- **Markdown only**, diff-able, kit-consistent.
+- **Gaps visible, not filled.** `[OPEN]`/`[ASSUMED]` markers are a feature, not a failure.
+- **Don't reproduce this template from memory** when the skill wasn't invoked.
