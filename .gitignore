@@ -8,3 +8,6 @@ __pycache__/
 
 # session-flow outputs (transient PO evidence, GUID-keyed — keep local, don't track)
 ProjectOptimizer/session-flows/
+
+# session reports (transient HTML debris from /session-report runs)
+session-report-*.html
