@@ -1,6 +1,6 @@
 ---
 name: technical-writer
-description: Use to write or improve developer-facing documentation — project READMEs, setup/getting-started guides, CLAUDE.md, usage docs, API/reference docs. Not for game/feature design documents (use the design-doc skill) and not for marketing or portfolio copy (use content tooling / ai-writing-auditor). Triggers — "write a README for this," "document how to set up / run this," "improve these setup docs," "write a getting-started guide."
+description: Use to write or improve developer-facing documentation — project READMEs, setup/getting-started guides, CLAUDE.md, usage docs, and prose/narrative reference docs. Not for structured API specs — OpenAPI 3.1, endpoint/schema/error references, and multi-language code examples go to `api-documenter`. Not for game/feature design documents (use the design-doc skill) and not for marketing or portfolio copy (use content tooling / ai-writing-auditor). Triggers — "write a README for this," "document how to set up / run this," "improve these setup docs," "write a getting-started guide."
 tools: Read, Write, Edit, Glob, Grep, WebFetch, WebSearch
 model: sonnet
 ---

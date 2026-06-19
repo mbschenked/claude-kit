@@ -1,0 +1,304 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Skills &amp; Subagents Catalog Delta — June 2026</title><style>
+@page { size: A4; margin: 18mm 16mm; }
+:root { --ink:#1a1f29; --muted:#5b6673; --line:#d9dee6; --accent:#3b5bdb; --soft:#f4f6fb; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color:#1a1f29;
+       line-height:1.55; max-width: 860px; margin: 0 auto; padding: 24px 28px; font-size: 14px; }
+h1 { font-size: 26px; line-height:1.2; margin: 0 0 4px; letter-spacing:-0.01em; }
+h2 { font-size: 19px; margin: 30px 0 10px; padding-bottom:6px; border-bottom:2px solid #3b5bdb; }
+h3 { font-size: 15.5px; margin: 22px 0 8px; color:#27324a; }
+p, li { font-size: 14px; }
+a { color:#3b5bdb; text-decoration: none; }
+code { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px;
+       background:#f4f6fb; padding:1px 5px; border-radius:4px; }
+pre { background:#f4f6fb; padding:12px 14px; border-radius:8px; overflow:auto; border:1px solid #e3e8f0; }
+pre code { background:none; padding:0; }
+table { border-collapse: collapse; width:100%; margin: 12px 0 18px; font-size: 12.5px; }
+th, td { border:1px solid #d9dee6; padding:7px 9px; text-align:left; vertical-align:top; }
+th { background:#eef2fb; font-weight:600; }
+tr:nth-child(even) td { background:#fafbfe; }
+blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid #3b5bdb; background:#f4f6fb; color:#3a4656; }
+hr { border:none; border-top:1px solid #d9dee6; margin:26px 0; }
+strong { color:#101521; }
+.docmeta { color:#5b6673; font-size:13px; margin-bottom:18px; }
+</style></head><body><h1>Skills &amp; Subagents Catalog Delta — June 2026</h1><div class="docmeta">Anthropic · VoltAgent · shanraisshan — what changed since 2026-05-28, with adoption verdicts and dynamic-workflow recommendations</div><h1 id="skills-subagents-catalog-delta-june-2026">Skills &amp; Subagents Catalog Delta — June 2026</h1>
+<p><strong>Window reviewed:</strong> 2026-05-28 (last §7 refresh) → 2026-06-19.
+<strong>Sources:</strong> Anthropic (<code>anthropics/skills</code> + <code>anthropics/claude-plugins-official</code> + Claude Code docs) · VoltAgent (<code>awesome-claude-code-subagents</code>) · shanraisshan (<code>claude-code-best-practice</code>).
+<strong>Method:</strong> read-only research-scout fan-out + raw-file reads of every candidate agent. Confidence tags: <code>[verified]</code> = read directly this session; <code>[inferred]</code> = derived from listings/commits; <code>[speculative]</code> = unconfirmed.</p>
+<hr />
+<h2 id="1-executive-summary">1. Executive summary</h2>
+<p>The headline isn't a new agent — it's a <strong>platform shift</strong>. <strong>Dynamic Workflows went GA (~2026-05-28)</strong>: script-orchestrated fan-out of up to 16 concurrent / 1000 total subagents, results kept out of the context window, resumable, and saveable as slash commands. That reframes "better prompting for dynamic workflows" from a technique into operating a real orchestration runtime — captured as a new kit asset (<code>rules/dynamic-workflow-prompting.md</code>) and a new §7 orchestration tier.</p>
+<p>Three things to act on:</p>
+<ol>
+<li><strong>Four clean VoltAgent agents are worth adopting</strong> — <code>mcp-developer</code>, <code>cli-developer</code>, <code>first-principles-thinking</code>, <code>api-documenter</code>. All hardened and added to the kit this pass. The rest of the ~23 new agents are team/infra/enterprise mismatches or carry the same context-manager-handshake / fabricated-metric anti-patterns that got most of the May batch skipped.</li>
+<li><strong>shanraisshan added genuinely useful prompting craft</strong> — <code>!command</code> injection, <code>PROACTIVELY</code> triggers, <code>Agent(agent_type)</code> tool restriction, and an agent-teams data-contract pattern. Folded into the new asset.</li>
+<li><strong>One flag for your decision:</strong> <code>content-quality-editor</code> is the cleanest new agent structurally, but it does the exact job (<code>unslop</code>-based AI-tell stripping) that your global CLAUDE.md <em>deprecated</em> <code>ai-writing-auditor</code> for. Left unadopted pending your call.</li>
+</ol>
+<p>Anthropic's skills repo is essentially unchanged (still 17); the action there is the platform features, not new installables.</p>
+<hr />
+<h2 id="2-per-source-deltas">2. Per-source deltas</h2>
+<h3 id="2a-anthropic-t1-platform-level">2a. Anthropic (T1) — platform-level</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What changed</th>
+<th>Confidence</th>
+<th>Relevance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dynamic Workflows GA</strong></td>
+<td>New first-class primitive (~05-28). ≤16 concurrent / 1000 total subagents; results in script vars; resumable; saved → slash command. Trigger: <code>ultracode</code> / <code>/effort ultracode</code> / <code>/deep-research</code> / "use a workflow" (v2.1.160+). Needs v2.1.154+.</td>
+<td>verified</td>
+<td><strong>High</strong> — already in your environment; drives the prompting asset + §7 tier.</td>
+</tr>
+<tr>
+<td><strong><code>/deep-research</code></strong></td>
+<td>First bundled workflow command — adversarial multi-source research → cited report.</td>
+<td>verified</td>
+<td>High — candidate replacement for ad-hoc research fan-outs.</td>
+</tr>
+<tr>
+<td><strong>Fable 5 / Mythos 5</strong></td>
+<td>New model family (06-09), tuned for long multi-step autonomous tasks. Fable 5 (<code>claude-fable-5</code>) public; Mythos 5 restricted.</td>
+<td>verified</td>
+<td>High — preferred <code>model:</code> for hard workflow-orchestration stages.</td>
+</tr>
+<tr>
+<td><strong><code>claude-api</code> skill refresh</strong></td>
+<td>Updated 06-09 with Fable 5 / Mythos 5 IDs, scheduled deployments, vault env-var credentials.</td>
+<td>verified</td>
+<td>Medium.</td>
+</tr>
+<tr>
+<td><strong><code>frontend-design</code> skill refresh</strong></td>
+<td>Updated 06-07.</td>
+<td>verified</td>
+<td>Low.</td>
+</tr>
+<tr>
+<td><strong><code>project-artifact</code> plugin</strong></td>
+<td>New (06-19): living HTML status page for multi-workstream projects → <code>claude.ai/code/artifact/…</code>. Needs the Artifact tool (Team/Enterprise beta).</td>
+<td>verified</td>
+<td>Situational.</td>
+</tr>
+<tr>
+<td><strong>anthropics/skills count</strong></td>
+<td>Still 17; none added/removed since baseline.</td>
+<td>verified</td>
+<td>— confirms no install action needed there.</td>
+</tr>
+</tbody>
+</table>
+<p>Sources: <code>code.claude.com/docs/en/workflows</code> · <code>claude.com/blog/introducing-dynamic-workflows-in-claude-code</code> · <code>anthropic.com/news/claude-fable-5-mythos-5</code> · <code>github.com/anthropics/skills/commits/main</code> · <code>github.com/anthropics/claude-plugins-official/commits/main</code>.</p>
+<h3 id="2b-voltagent-t2-catalog-grew-131-154-agents">2b. VoltAgent (T2) — catalog grew ~131 → ~154 agents</h3>
+<p>New agents cluster in <strong>04-quality-security</strong> (~8: accessibility-tester, ad-security-reviewer, chaos-engineer, gdpr-ccpa-compliance, penetration-tester, powershell-security-hardening, qa-expert, ui-ux-tester), <strong>06-developer-experience</strong> (~6: build-engineer, cli-developer, dependency-manager, <strong>mcp-developer</strong>, powershell-module-architect, powershell-ui-architect, visual-asset-generator), and <strong>08-business-product</strong> (assumption-mapping, backlog-grooming, content-quality-editor, growth-loops). [verified by directory listing]</p>
+<p><strong>No structural improvement:</strong> the fabricated-performance-metrics flavor text and context-manager JSON handshakes that flagged the May batch are still present in many new agents. [verified by raw-file read] A 06-15 commit removed VoltAgent branding from the README — possible governance change. [inferred]</p>
+<p>Sources: repo README + per-category trees + raw files (see adoption matrix §3 for the files actually read).</p>
+<h3 id="2c-shanraisshan-t2t3-richest-for-the-dynamic-workflow-ask">2c. shanraisshan (T2/T3) — richest for the dynamic-workflow ask</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What it is</th>
+<th>Confidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>agent-teams/</code> directory</strong> <em>(new)</em></td>
+<td>Concrete pattern: data-contract negotiation between parallel teammates, parallel-component independence, deterministic output routing, frontmatter resource caps (<code>model: haiku</code>, <code>maxTurns: 3</code>).</td>
+<td>verified</td>
+</tr>
+<tr>
+<td><strong>Five named macro-workflows</strong></td>
+<td>Superpowers, Everything Claude Code, Matt Pocock Skills, Spec Kit, gstack — all converge on <strong>Research → Plan → Execute → Review → Ship</strong>.</td>
+<td>verified</td>
+</tr>
+<tr>
+<td><strong><code>!command</code> injection</strong></td>
+<td><code>!</code>-prefixed line runs a shell command and injects output into the prompt — feed live state (git diff, build error) instead of describing it.</td>
+<td>inferred (in README; matches real CC feature)</td>
+</tr>
+<tr>
+<td><strong><code>PROACTIVELY</code> trigger</strong></td>
+<td>The keyword in a subagent description biases auto-invocation.</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><strong><code>Agent(agent_type)</code> restriction</strong></td>
+<td>In the <code>tools:</code> field, restricts which subagents may be spawned.</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><strong>"Hot Features" list + star counts</strong></td>
+<td>Lists ~20 features (<code>/sandbox</code>, <code>/focus</code>, <code>/advisor</code>, Auto Mode, etc.); some look aspirational and star counts look inflated.</td>
+<td>speculative — <strong>do not cite uncritically.</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Repo is actively maintained but mostly via automated daily chore commits; human content additions aren't cleanly datable. Sources: repo README + <code>agent-teams/agent-teams-prompt.md</code> + <code>best-practice/claude-subagents.md</code> + repo tree.</p>
+<hr />
+<h2 id="3-adoption-verdict-matrix-voltagent-new-agents">3. Adoption verdict matrix (VoltAgent new agents)</h2>
+<p>Judged against the kit's standing rules: explicit minimal <code>tools:</code>, no context-manager JSON handshakes, no fabricated-metric templates, read-only reviewers. All rows <code>[verified from raw file]</code> unless noted.</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Tools</th>
+<th>Anti-patterns present?</th>
+<th>Verdict</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>mcp-developer</strong></td>
+<td>Read,Write,Edit,Bash,Glob,Grep</td>
+<td>context-mgr opener + handshake + fake metrics (stripped)</td>
+<td><strong>ADOPTED</strong></td>
+<td>Only purpose-built MCP agent; fills May gap.</td>
+</tr>
+<tr>
+<td><strong>cli-developer</strong></td>
+<td>Read,Write,Edit,Bash,Glob,Grep</td>
+<td>handshake + fake metrics (stripped)</td>
+<td><strong>ADOPTED</strong></td>
+<td>CLI design for kit/UE5/portfolio tooling.</td>
+</tr>
+<tr>
+<td><strong>first-principles-thinking</strong></td>
+<td>Read,Grep,Glob,WebFetch,WebSearch (read-only)</td>
+<td>only cross-agent prose (stripped)</td>
+<td><strong>ADOPTED</strong></td>
+<td>Clean reasoning agent; no overlap with research-scout.</td>
+</tr>
+<tr>
+<td><strong>api-documenter</strong></td>
+<td>Read,Write,Edit,Glob,Grep,WebFetch,WebSearch</td>
+<td>handshake + fake metrics (stripped); Write now scoped to docs</td>
+<td><strong>ADOPTED</strong></td>
+<td>OpenAPI + examples; complements technical-writer.</td>
+</tr>
+<tr>
+<td><strong>content-quality-editor</strong></td>
+<td>Read,Write,Edit,Bash</td>
+<td>none structurally</td>
+<td><strong>FLAG — your call</strong></td>
+<td>Does the <code>unslop</code> AI-tell-stripping job your CLAUDE.md deprecated <code>ai-writing-auditor</code> for; <code>unslop</code> not installed.</td>
+</tr>
+<tr>
+<td><strong>accessibility-tester</strong></td>
+<td>Read,Grep,Glob,Bash (read-only)</td>
+<td>likely context-mgr block (line ~95, unconfirmed)</td>
+<td><strong>DEFER</strong></td>
+<td>Confirm the block; adopt only if shipping a11y-sensitive web.</td>
+</tr>
+<tr>
+<td><strong>penetration-tester</strong></td>
+<td>Read,Grep,Glob,Bash (read-only, Opus)</td>
+<td>context-mgr opener; rest unread</td>
+<td><strong>DEFER</strong></td>
+<td>Portfolio pre-launch security sweep.</td>
+</tr>
+<tr>
+<td><strong>llm-architect</strong></td>
+<td>Read,Write,Edit,Bash,Glob,Grep (Opus)</td>
+<td>—</td>
+<td><strong>DEFER</strong></td>
+<td>Overlaps prompt-engineer; only for real LLM pipelines.</td>
+</tr>
+<tr>
+<td><strong>embedded-systems</strong></td>
+<td>Read,Write,Edit,Bash,Glob,Grep</td>
+<td>cross-agent list</td>
+<td><strong>DEFER</strong></td>
+<td>Only for hardware targets.</td>
+</tr>
+<tr>
+<td><strong>dependency-manager</strong></td>
+<td>Read,Write,Edit,Bash,Glob,Grep</td>
+<td><strong>wired context-mgr JSON + hard-coded <code>vulnerabilities_fixed: 23</code> etc.</strong></td>
+<td><strong>SKIP</strong></td>
+<td>Worst offender; structural rewrite needed.</td>
+</tr>
+<tr>
+<td><strong>ui-ux-tester</strong></td>
+<td>+chrome-mcp,computer-use</td>
+<td><strong>wired context-mgr JSON; hard runtime deps</strong></td>
+<td><strong>SKIP</strong></td>
+<td>Team-orchestration design; deps you don't run.</td>
+</tr>
+<tr>
+<td><strong>build-engineer</strong></td>
+<td>Read,Write,Edit,Bash,Glob,Grep</td>
+<td>context-mgr opener + fake % targets</td>
+<td><strong>SKIP</strong></td>
+<td>JS/monorepo framing ≠ UE5 build (UBT/CMake).</td>
+</tr>
+<tr>
+<td><strong>qa-expert</strong></td>
+<td>Read,Grep,Glob,Bash</td>
+<td>context-mgr opener + baked coverage %</td>
+<td><strong>SKIP</strong></td>
+<td>Enterprise QA; overlaps code-review-worker + tdd-generator.</td>
+</tr>
+<tr>
+<td><strong>chaos-engineer</strong></td>
+<td>Read,Write,Edit,Bash,Glob,Grep</td>
+<td>context-mgr opener</td>
+<td><strong>SKIP</strong></td>
+<td>No distributed-systems surface for a solo dev.</td>
+</tr>
+<tr>
+<td><strong>search-specialist</strong></td>
+<td>read-only</td>
+<td>—</td>
+<td><strong>SKIP</strong></td>
+<td>Overlaps research-scout.</td>
+</tr>
+<tr>
+<td><strong>scientific-literature-researcher</strong></td>
+<td>+mcp__bgpt</td>
+<td>BGPT MCP dependency</td>
+<td><strong>SKIP</strong></td>
+<td>Inert without the BGPT MCP.</td>
+</tr>
+</tbody>
+</table>
+<p>All infrastructure (18 agents) and pure data-platform/ML agents: <strong>SKIP</strong> — no signal for a solo dev without production backend.</p>
+<hr />
+<h2 id="4-recommended-new-workflows-recommendations-only-not-built">4. Recommended new workflows (recommendations only — not built)</h2>
+<p>Now that Dynamic Workflows are native, three are worth authoring as saved <code>/commands</code> when the moment comes. Cost amortizes across reruns, so build only when a workflow will be re-run.</p>
+<ol>
+<li><strong><code>refresh-catalog</code></strong> — promote the exact 4-source delta scan run for this report into a one-command pipeline: fan out one research agent per source → an adoption-verdict stage scoring each new agent against the kit's rules → a synthesized brief. Highest value; this report was assembled by hand and would be one command next time. Pairs with the existing <code>refresh-cc-catalog</code> skill (which already forks a research-scout) — the workflow generalizes it to also produce verdicts.</li>
+<li><strong><code>agent-adoption-bakeoff</code></strong> — given a candidate upstream agent, fan out three lenses (harden-it / score-vs-kit-rules / check-overlap-with-existing) → synthesis verdict. Mirrors the proven <code>tdd-bakeoff.js</code> pattern already in GameMakerKit.</li>
+<li><strong><code>portfolio-prelaunch-sweep</code></strong> — chain the two DEFER reviewers (<code>accessibility-tester</code> + <code>penetration-tester</code>) as a gated pre-launch check when the portfolio ships. Read-only; one command, two perspectives.</li>
+</ol>
+<p>Prompting discipline for all three: see §5 and <code>rules/dynamic-workflow-prompting.md</code>.</p>
+<hr />
+<h2 id="5-better-prompting-for-dynamic-workflows-summary">5. Better prompting for dynamic workflows (summary)</h2>
+<p>Full guide: <strong><code>ClaudeKit/rules/dynamic-workflow-prompting.md</code></strong>. The load-bearing points:</p>
+<ul>
+<li><strong>You can't steer mid-flight</strong> — execution is synchronous. Control collapses to (1) the prompts up front, (2) between-phase barriers, (3) <code>/workflows</code> kill/resume. So the <strong>prompt-review checkpoint</strong> before scaling is the highest-ROI move.</li>
+<li><strong>Delegation anatomy</strong> — every delegated task carries Objective · Output format · Tool/source guidance · Boundaries (scope <em>and</em> effort). Vague tasks are the #1 failure cause.</li>
+<li><strong>Pilot on 2–3, then scale.</strong> A workflow wrong on item 1 is wrong 200×.</li>
+<li><strong>Bake the verify in</strong> (a fresh agent refutes), and make the <strong>schema demand evidence</strong> (test output / diff / line ref), never a bare <code>{passed:true}</code>.</li>
+<li><strong><code>pipeline()</code> by default; <code>parallel()</code> only when a stage truly needs all prior results</strong> (dedup, early-exit, cross-comparison).</li>
+<li><strong>Upgrade the model before doubling the agent count</strong> — tokens explain ~80% of perf variance; Fable 5 / Mythos 5 suit hard synthesis/verify stages.</li>
+<li>New craft folded in from shanraisshan: <strong><code>!command</code></strong> live-state injection, <strong><code>PROACTIVELY</code></strong> triggers, <strong><code>Agent(agent_type)</code></strong> spawn restriction, and the <strong>agent-teams data-contract</strong> for mergeable parallel output.</li>
+</ul>
+<hr />
+<h2 id="6-open-questions-what-wasnt-verified">6. Open questions &amp; what wasn't verified</h2>
+<ul>
+<li><strong><code>unslop</code> maintenance / macOS-arm64 support</strong> — unconfirmed; it's not currently installed, so <code>content-quality-editor</code> would be inert. Decision needed on whether AI-tell stripping belongs in the kit at all (vs. the deprecated <code>ai-writing-auditor</code>).</li>
+<li><strong><code>accessibility-tester</code> line-95 context-manager block</strong> — flagged but not read verbatim; confirm before any adoption (could flip DEFER → SKIP).</li>
+<li><strong><code>penetration-tester</code> / <code>qa-expert</code> body tails</strong> — only first ~50 lines read; SKIP/DEFER verdicts stand but the full bodies weren't audited.</li>
+<li><strong>shanraisshan "Hot Features" dates &amp; star counts</strong> — not separable from automated commits; treat the list as aspirational until cross-checked against the official changelog.</li>
+<li><strong><code>project-artifact</code> install path</strong> — present in the <code>plugins/</code> dir but not confirmed in <code>marketplace.json</code> (so <code>/plugin install</code> may not yet resolve it), and it needs the Artifact beta regardless.</li>
+<li><strong>Unchecked VoltAgent depth</strong> — <code>01-core-development</code>, <code>03-infrastructure</code>, <code>05-data-ai</code> raw files largely unread (dismissed as not-solo-relevant by category); a silent useful addition there is possible but unlikely.</li>
+<li><strong>CHARTER.md duplicate</strong> — a second copy exists at <code>ClaudeCode/claude-kit/ProjectOptimizer/CHARTER.md</code>; only the canonical <code>ClaudeCode/ProjectOptimizer/CHARTER.md</code> was updated this pass.</li>
+</ul></body></html>
