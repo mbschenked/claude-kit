@@ -35,19 +35,29 @@ const LENS_AXES = {
   quality:      'QUALITY: reuse of shipped dependencies vs duplication, dead code, naming, scope discipline. Flag ONLY issues that would block a merge — not preferences.',
 }
 
-// ---- resolve config from args ----
-const task = (args && args.task) ? args.task : (typeof args === 'string' ? args : 'No task provided')
-const hasPlan = !!(args && args.plan)
-const plan = hasPlan ? args.plan : 'No pre-approved plan supplied.'
+// ---- resolve config from args (tolerate args delivered as a JSON string) ----
+let cfg = args
+if (typeof cfg === 'string') { try { cfg = JSON.parse(cfg) } catch (e) { cfg = { task: args } } }
+cfg = cfg || {}
+const task = cfg.task ? cfg.task : 'No task provided'
+const hasPlan = !!cfg.plan
+const plan = hasPlan ? cfg.plan : 'No pre-approved plan supplied.'
 const planFraming = hasPlan
   ? 'following the approved plan below — it has been explored, grilled with the user, and audited, so treat its decisions as settled'
   : 'using your own judgment from the task (no pre-grilled plan was supplied — match existing conventions, keep scope tight)'
 
-const tier = EFFORT[(args && args.effort)] || EFFORT.balanced
+const tier = EFFORT[cfg.effort] || EFFORT.balanced
 const maxRounds = tier.maxRounds
-const A = (args && args.agents) || {}
-const implementSlot = A.implement ? { agentType: A.implement, model: DEFAULTS.implement.model } : DEFAULTS.implement
-const fixSlot = A.fix ? { agentType: A.fix, model: DEFAULTS.fix.model } : DEFAULTS.fix
+const A = cfg.agents || {}
+// A slot override may be a bare agentType string OR { agentType, model } — the audit step picks
+// BOTH the specialist and its model per slot. Model falls back to the per-slot default when unset.
+const resolveSlot = (val, dflt) => {
+  if (!val) return dflt
+  if (typeof val === 'string') return { agentType: val, model: dflt.model }
+  return { agentType: val.agentType || dflt.agentType, model: val.model || dflt.model }
+}
+const implementSlot = resolveSlot(A.implement, DEFAULTS.implement)
+const fixSlot = resolveSlot(A.fix, DEFAULTS.fix)
 // review lenses: an explicit args.agents.reviewLenses override wins; else build from the effort tier
 const lenses = (Array.isArray(A.reviewLenses) && A.reviewLenses.length)
   ? A.reviewLenses.map(l => ({ lens: l.lens, axis: l.axis || LENS_AXES[l.lens] || l.lens, agentType: l.agentType || DEFAULTS.reviewer.agentType, model: l.model || DEFAULTS.reviewer.model }))
@@ -73,7 +83,7 @@ const FINDINGS_SCHEMA = {
   required: ['findings'],
 }
 
-log(`Orchestrating: ${task}  [effort=${(args && args.effort) || 'balanced'}, lenses=${lenses.map(l => l.lens).join('/')}, maxRounds=${maxRounds}, implement=${implementSlot.agentType}]`)
+log(`Orchestrating: ${task}  [effort=${cfg.effort || 'balanced'}, lenses=${lenses.map(l => l.lens).join('/')}, maxRounds=${maxRounds}, implement=${implementSlot.agentType}]`)
 
 phase('Implement')
 const impl = await agent(
@@ -122,8 +132,12 @@ while (round < maxRounds) {
 
 return {
   task,
-  effort: (args && args.effort) || 'balanced',
-  agents: { implement: implementSlot.agentType, reviewers: lenses.map(l => `${l.lens}:${l.agentType}`), fix: fixSlot.agentType },
+  effort: cfg.effort || 'balanced',
+  agents: {
+    implement: `${implementSlot.agentType}@${implementSlot.model}`,
+    reviewers: lenses.map(l => `${l.lens}:${l.agentType}@${l.model}`),
+    fix: `${fixSlot.agentType}@${fixSlot.model}`,
+  },
   rounds: round,
   converged,        // true  = a review round came back clean
   reviewFailed,     // true  = a review round produced no valid output (inconclusive, NOT clean)
