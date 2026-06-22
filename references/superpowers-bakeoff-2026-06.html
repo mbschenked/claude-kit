@@ -1,0 +1,238 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Superpowers vs. Kit vs. Dynamic Workflow — Three-Arm Bake-Off</title><style>
+@page { size: A4; margin: 18mm 16mm; }
+:root { --ink:#1a1f29; --muted:#5b6673; --line:#d9dee6; --accent:#3b5bdb; --soft:#f4f6fb; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color:#1a1f29;
+       line-height:1.55; max-width: 860px; margin: 0 auto; padding: 24px 28px; font-size: 14px; }
+h1 { font-size: 26px; line-height:1.2; margin: 0 0 4px; letter-spacing:-0.01em; }
+h2 { font-size: 19px; margin: 30px 0 10px; padding-bottom:6px; border-bottom:2px solid #3b5bdb; }
+h3 { font-size: 15.5px; margin: 22px 0 8px; color:#27324a; }
+p, li { font-size: 14px; }
+a { color:#3b5bdb; text-decoration: none; }
+code { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px;
+       background:#f4f6fb; padding:1px 5px; border-radius:4px; }
+pre { background:#f4f6fb; padding:12px 14px; border-radius:8px; overflow:auto; border:1px solid #e3e8f0; }
+pre code { background:none; padding:0; }
+table { border-collapse: collapse; width:100%; margin: 12px 0 18px; font-size: 12.5px; }
+th, td { border:1px solid #d9dee6; padding:7px 9px; text-align:left; vertical-align:top; }
+th { background:#eef2fb; font-weight:600; }
+tr:nth-child(even) td { background:#fafbfe; }
+blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid #3b5bdb; background:#f4f6fb; color:#3a4656; }
+hr { border:none; border-top:1px solid #d9dee6; margin:26px 0; }
+strong { color:#101521; }
+.docmeta { color:#5b6673; font-size:13px; margin-bottom:18px; }
+</style></head><body><h1>Superpowers vs. Kit vs. Dynamic Workflow — Three-Arm Bake-Off</h1><h1 id="superpowers-vs-kit-vs-dynamic-workflow">Superpowers vs. Kit vs. Dynamic Workflow</h1>
+<p><strong>A controlled, blind, three-arm bake-off on one real UE5/GAS task.</strong></p>
+<h2 id="tldr">TL;DR</h2>
+<p>The newly-installed <code>superpowers</code> plugin (a process-methodology framework) was put head-to-head against Max's ClaudeKit specialists and a dynamic Workflow, all implementing the <strong>same</strong> <code>UTOGGA_ChainedAttack</code> combo ability in TOG-Remake, judged blind by a 5-lens panel.</p>
+<ul>
+<li>🥇 <strong>Highest quality: the dynamic Workflow (Arm C) — 80/100</strong> — but at <strong>~3.2× the kit's token cost.</strong></li>
+<li>💰 <strong>Most efficient: the Kit (Arm B) — 66/100 at ~174k tokens / ~12 min</strong> — best quality-per-token, and it <strong>Pareto-dominates superpowers</strong> (higher quality <em>and</em> cheaper).</li>
+<li>🛑 <strong>Superpowers (Arm A) came last — 60/100 at ~210k tokens</strong> — and shipped a <strong>critical activation bug</strong> its TDD/verification discipline couldn't catch, because the project can't compile on this machine.</li>
+</ul>
+<p><strong>Bottom line for the original question ("can superpowers compete with parts of the kit?"):</strong> On this task, no — superpowers was dominated by the kit on both axes. But this is <strong>n=1</strong> (one task, one run per arm, one judge per lens, one model). Treat as <em>directional</em>, not a verdict on the framework.</p>
+<hr />
+<h2 id="setup-fairness-controls">Setup &amp; fairness controls</h2>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>What was done</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Task</strong></td>
+<td>Implement <code>UTOGGA_ChainedAttack</code> (persistent multi-step combo GameplayAbility), fully specified in <code>docs/in-depth/TOG-Combo-System-Architecture/</code> §4–10 + AgentRef.</td>
+</tr>
+<tr>
+<td><strong>Same starting state</strong></td>
+<td>Three git worktrees off <code>master @ 679157e</code>, isolated so arms never collide.</td>
+</tr>
+<tr>
+<td><strong>Same model</strong></td>
+<td>All implementation + judging pinned to <strong>sonnet</strong> — tests <em>method</em>, not model.</td>
+</tr>
+<tr>
+<td><strong>Equal review rigor</strong></td>
+<td>Each arm got a real <strong>implement → review → fix</strong> loop (Arm B's was added after a mid-run catch — see Process Notes).</td>
+</tr>
+<tr>
+<td><strong>Blind judging</strong></td>
+<td>Diffs relabeled Submission 1/2/3; arm↔submission mapping withheld from judges; verified no identity leaks in the diffs.</td>
+</tr>
+<tr>
+<td><strong>Workflow compliance</strong></td>
+<td>Each arm's transcript audited against its planned workflow before judging (all three: faithful).</td>
+</tr>
+<tr>
+<td><strong>Static judging</strong></td>
+<td>TOG-Remake is <strong>not buildable on this Mac</strong> and has <strong>no test harness</strong> — judged by reading the diff vs. the spec. Authored tests counted as artifacts, not run. This was declared up front.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The three arms (all same task):</strong>
+- <strong>Arm A — Superpowers methodology.</strong> One agent driving the full skill spine: <code>brainstorming → writing-plans → test-driven-development → systematic-debugging → requesting/receiving-code-review → finishing-a-development-branch</code>.
+- <strong>Arm B — Kit specialists.</strong> <code>game-developer</code> implements → <code>code-reviewer</code> fan-out → <code>game-developer</code> applies fixes. No superpowers (structurally — those agents have no Skill tool).
+- <strong>Arm C — Dynamic Workflow.</strong> Decompose-and-fan-out: 2 parallel spec/dependency readers → implementer → 3 adversarial verify lenses → fixer (7 agents).</p>
+<hr />
+<h2 id="quality-scores-blind-5-lens-panel-0100">Quality scores (blind 5-lens panel, 0–100)</h2>
+<table>
+<thead>
+<tr>
+<th>Lens</th>
+<th>Arm C — Workflow</th>
+<th>Arm A — Superpowers</th>
+<th>Arm B — Kit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GAS / architecture fidelity</td>
+<td><strong>82</strong></td>
+<td>48</td>
+<td>65</td>
+</tr>
+<tr>
+<td>C++ / UE5 correctness</td>
+<td><strong>72</strong></td>
+<td>44</td>
+<td>63</td>
+</tr>
+<tr>
+<td>Completeness vs spec</td>
+<td><strong>82</strong></td>
+<td>76</td>
+<td>58</td>
+</tr>
+<tr>
+<td>Code quality &amp; hygiene</td>
+<td><strong>82</strong></td>
+<td>78</td>
+<td>72</td>
+</tr>
+<tr>
+<td>No-fabrication / conventions</td>
+<td><strong>82</strong></td>
+<td>55</td>
+<td>73</td>
+</tr>
+<tr>
+<td><strong>Average</strong></td>
+<td><strong>80</strong></td>
+<td><strong>60</strong></td>
+<td><strong>66</strong></td>
+</tr>
+</tbody>
+</table>
+<p><em>(Submission mapping, held private from judges during scoring: Sub-1 = Arm C, Sub-2 = Arm A, Sub-3 = Arm B.)</em></p>
+<h2 id="efficiency-implement-review-fix-totals">Efficiency (implement + review + fix totals)</h2>
+<table>
+<thead>
+<tr>
+<th>Arm</th>
+<th>Quality</th>
+<th>Output tokens</th>
+<th>Wall-clock</th>
+<th>Agents</th>
+<th><strong>Quality / 100k tok</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>B — Kit</strong></td>
+<td>66</td>
+<td><strong>~174k</strong></td>
+<td><strong>~12 min</strong></td>
+<td>3</td>
+<td><strong>37.9</strong></td>
+</tr>
+<tr>
+<td><strong>A — Superpowers</strong></td>
+<td>60</td>
+<td>~210k</td>
+<td>~23 min</td>
+<td>2</td>
+<td>28.6</td>
+</tr>
+<tr>
+<td><strong>C — Workflow</strong></td>
+<td>80</td>
+<td>~558k</td>
+<td>~27 min</td>
+<td>7</td>
+<td>14.3</td>
+</tr>
+</tbody>
+</table>
+<p><em>(Token totals: Arm A 209,775; Arm B 89,612 + 58,134 + 26,577 = 174,323; Arm C 558,253. Panel judging (~470k) and compliance audits (~107k) are orchestration overhead, not charged to any arm.)</em></p>
+<hr />
+<h2 id="key-findings">Key findings</h2>
+<h3 id="1-superpowers-shipped-a-critical-bug-its-own-process-should-have-caught">1. Superpowers shipped a critical bug its own process should have caught</h3>
+<p>The panel flagged a <strong>critical first-step defect</strong> in Arm A: <code>AdvanceIndex()</code> early-returns when <code>ActiveChain</code> is null, but <code>ActiveChain</code> <em>is</em> null on the first call — so <code>AttackIndex</code> stays at <code>-1</code>, <code>SelectMontage()</code> returns <code>nullptr</code>, and <strong>the ability aborts on activation; the chain never runs.</strong> Arm A ran TDD <em>and</em> a forked code-review <em>and</em> systematic-debugging — and still missed it. Why: the bug is a runtime activation-order issue that authored-but-unrun tests can't surface. <strong>The static environment neutralized superpowers' signature disciplines.</strong></p>
+<h3 id="2-the-kits-review-loop-caught-the-exact-class-of-bug-superpowers-missed">2. The kit's review loop caught the exact class of bug superpowers missed</h3>
+<p>Arm B's <code>code-reviewer</code> pass explicitly flagged the step-ordering hazard, and the fix specifically guarded the first-step case (<code>SelectChain()</code> first when <code>ActiveChain == nullptr</code>). The kit's specialist+review loop dodged the bug superpowers fell into — at lower cost.</p>
+<h3 id="3-the-workflow-won-on-quality-by-being-broadest-and-most-adversarial">3. The workflow won on quality by being broadest <em>and</em> most adversarial</h3>
+<p>Arm C's 3-lens adversarial verify caught 8 findings (2 critical) and its fixer addressed them; it also closed the <code>State.Attacking</code> tag gap and wired <code>MeleeAttack</code>. That breadth earned top fidelity/completeness — but cost 558k tokens (6× Arm B's implementation alone).</p>
+<h3 id="4-scope-discipline-cut-both-ways">4. Scope discipline cut both ways</h3>
+<p>Arm B changed only the 2 target files — praised under <strong>code quality / scope discipline</strong> (72) but penalized under <strong>fidelity/completeness</strong> (65/58) for leaving the <code>State.Attacking</code> tag registration as a documented TODO. Arms A and C registered the tag (broader scope) and scored higher on fidelity. <em>There's no free lunch: the minimal-diff that reviewers love is the same diff that "completeness" judges dock.</em></p>
+<hr />
+<h2 id="threats-to-validity-read-before-acting">Threats to validity (read before acting)</h2>
+<ul>
+<li><strong>n = 1.</strong> One task, one run per arm, one judge per lens, one model. The critical bug that sank Arm A could be run-to-run variance. <strong>Do not promote any single arm to policy on this alone.</strong></li>
+<li><strong>Static judging favors the cautious.</strong> No compile/run means correctness was a judge's <em>read</em>, not execution. This structurally penalized the TDD-heavy arm (A) and rewarded breadth (C).</li>
+<li><strong>Single judge per lens</strong> (not a per-lens panel) — less robust than the plan's ideal; scores are indicative.</li>
+<li><strong>Arm B's review loop was added mid-run</strong> after a fairness catch (see below); its tokens include that, fairly.</li>
+</ul>
+<hr />
+<h2 id="recommendation-superpowers-posture">Recommendation: superpowers posture</h2>
+<p>The data supports the <strong>"keep, tame the hook"</strong> posture from planning — now with evidence:</p>
+<ol>
+<li><strong>Don't make superpowers the default spine.</strong> Its full ceremony cost more than the kit and produced lower-quality code <em>here</em>, largely because its TDD/verify edge is blunted whenever a project can't run tests (true for TOG-Remake, and any UE5-on-Mac work).</li>
+<li><strong>Keep its genuinely-additive skills</strong> — <code>brainstorming</code>, <code>writing-plans</code>, <code>receiving-code-review</code> — which the kit lacks. Reach for them deliberately, not via the always-on enforcement hook.</li>
+<li><strong>Default to the kit for efficiency-sensitive work</strong>, and <strong>escalate to a dynamic Workflow when correctness matters more than budget</strong> (it bought the best quality, at a price).</li>
+<li><strong>Re-run before committing to policy.</strong> Suggested next pass: 2–3 tasks × 2 seeds, and at least one task in a <em>buildable</em> repo so superpowers' TDD discipline can actually execute — that's the fair rematch.</li>
+</ol>
+<hr />
+<h2 id="process-notes-honesty-log">Process notes (honesty log)</h2>
+<ul>
+<li><strong>Arm B initially skipped its review loop.</strong> The first run dispatched only the <code>game-developer</code> implementer; the planned <code>code-reviewer</code> fan-out + revise was missed. Caught mid-run (user flagged the agent count), then run properly so all three arms had equal review rigor. Without this, the kit would have been unfairly handicapped in its own bake-off.</li>
+<li><strong>Blind-leak fix.</strong> Arm A's diff originally included a <code>docs/superpowers/plans/...</code> path — an identity giveaway. All diffs were renormalized to <code>Source/</code> changes only before judging.</li>
+<li><strong>Workflow compliance verified from transcripts</strong>, not self-reports: Arm A invoked all 7 superpowers skills in order with a real forked reviewer; Arm C ran all 4 phases / 7 agents with zero superpowers leakage; Arm B's implement→review→fix chain confirmed by git log + structural no-Skill-tool guarantee.</li>
+</ul>
+<h2 id="appendix-artifacts">Appendix — artifacts</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Arm A commit (superpowers)</td>
+<td><code>bakeoff-arm-a @ 598b76e</code></td>
+</tr>
+<tr>
+<td>Arm B commits (kit)</td>
+<td><code>bakeoff-arm-b @ 928240e → 43186e4</code></td>
+</tr>
+<tr>
+<td>Arm C commit (workflow)</td>
+<td><code>bakeoff-arm-c @ 38f7cd6</code></td>
+</tr>
+<tr>
+<td>Blind diffs</td>
+<td><code>/tmp/bakeoff/submission-{1,2,3}.diff</code></td>
+</tr>
+<tr>
+<td>Judge panel transcript</td>
+<td>workflow <code>wf_bc14a7ce-52e</code></td>
+</tr>
+<tr>
+<td>Arm C workflow transcript</td>
+<td>workflow <code>wf_52871b9b-b30</code></td>
+</tr>
+</tbody>
+</table></body></html>
