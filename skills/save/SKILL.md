@@ -72,7 +72,20 @@ Follow the existing memory-system convention:
 - Update `MEMORY.md` (the index) with a single-line pointer per memory: `- [Title](file.md) — one-line hook`. Don't write memory content into `MEMORY.md` itself.
 - **Update existing memories** rather than creating duplicates. Check the index first.
 
-## 5. Report
+## 5. Archive the session (ClaudeOptimizer)
+
+After the memory writes, bank the session into the ClaudeOptimizer corpus by invoking the
+**`session-archive`** skill (it writes a metrics-stamped card + raw-transcript copy + ledger row).
+
+This step is **additive and best-effort** — it must never block or fail `/save`'s core function:
+
+- If `session-archive` reports it skipped (ClaudeOptimizer not present on this machine, or `node`
+  missing), that's fine — note it in the report and move on.
+- If it errors, surface the one-line error and continue; do **not** retry in a loop or abort the save.
+- If a best-practices grade for this session is already known (e.g. the `/save` grading command ran),
+  pass it through; otherwise let `session-archive` omit the grade.
+
+## 6. Report
 
 Return a brief summary, under ~15 lines, structured like:
 
@@ -82,6 +95,9 @@ Saved to supabrain:
 
 Memory files written/updated:
 - <path or filename — what it captures>
+
+Archived to ClaudeOptimizer:
+- <card path, or "skipped — <reason>">
 
 Skipped (intentionally):
 - <one line each, only if non-obvious>
