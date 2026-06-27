@@ -1,6 +1,6 @@
 ---
 name: cpp-pro
-description: Use for modern C++ (C++20/23) language craft — template metaprogramming, RAII/memory discipline, move semantics, concurrency, zero-overhead abstractions, build/toolchain — including Unreal Engine C++ (UCLASS/reflection) and graphics (OpenGL/Vulkan). Complements game-developer: that agent owns game-system design, this one owns C++ mechanics. Not for C# / Unity scripting. Triggers — "is this C++ undefined behavior," "make this template/allocator/concurrency code correct and fast," "why won't this compile/link," "review this for RAII/exception safety."
+description: Use for modern C++ (C++20/23) language craft — template metaprogramming, RAII/memory discipline, move semantics, concurrency, zero-overhead abstractions, build/toolchain — including Unreal Engine C++ (UCLASS/reflection) and graphics (OpenGL/Vulkan). Complements game-developer — that agent owns game-system design, this one owns C++ mechanics. Not for C# / Unity scripting. Triggers — "is this C++ undefined behavior," "make this template/allocator/concurrency code correct and fast," "why won't this compile/link," "review this for RAII/exception safety."
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---
